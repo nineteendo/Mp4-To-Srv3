@@ -27,7 +27,7 @@ def _parse_args() -> Namespace:
     )
     parser.add_argument('--idoffset', type=int, default=0, help="ID offset.")
     parser.add_argument('file', help="Path to the mp4 file.")
-    parser.add_argument('collums', type=int, help="Number of ASCII columns.")
+    parser.add_argument('rows', type=int, help="Number of ASCII rows.")
     return parser.parse_args()
 
 
@@ -46,7 +46,7 @@ def _main() -> None:
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
         entry: str = convert_to_ascii(
-            frame, idx, ms_per_frame, args.collums, args.submsoffset
+            frame, idx, ms_per_frame, args.rows, args.submsoffset
         )
         entry_size: int = len(entry) + 1
         if total_size + entry_size > _MAX_SIZE:

@@ -30,14 +30,14 @@ def _get_avg_brightness(
 
 
 # pylint: disable-next=R0914
-def _convert_img_to_ascii(img: Image.Image, cols: int) -> str:
+def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
     img = img.convert('L')
     width, height = img.size
-    pixel_width: float = width / cols
-    pixel_height: float = pixel_width / _SCALE
-    rows: int = int(height / pixel_height)
+    pixel_height: float = height / rows
+    pixel_width: float = pixel_height * _SCALE
+    cols: int = int(width / pixel_width)
     if cols > width or rows > height:
-        print("Image too small for specified cols!")
+        print("Image too small for specified rows!")
         sys.exit(1)
 
     ascii_img: list[str] = []
@@ -63,11 +63,11 @@ def convert_to_ascii(
     frame: Image.Image,
     frame_num: int,
     ms_per_frame: float,
-    cols: int,
+    rows: int,
     submsoffset: int
 ) -> str:
     """Convert a video frame to an SRT subtitle entry with ASCII art."""
-    ascii_img: str = _convert_img_to_ascii(frame, cols)
+    ascii_img: str = _convert_img_to_ascii(frame, rows)
     ms: float = frame_num * ms_per_frame + submsoffset
     start_time: str = _format_ms(ms)
     end_time: str = _format_ms(ms + ms_per_frame)
