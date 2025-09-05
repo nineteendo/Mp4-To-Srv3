@@ -11,6 +11,7 @@ from os.path import exists
 from convert_to_ascii import convert_to_ascii
 from convert_to_png import convert_to_png, print_progress_bar
 
+_MAX_SIZE: int = 5 * 1024 * 1024
 _OUTPUT_PATH: str = "output/subtitles.srt"
 
 
@@ -40,12 +41,21 @@ def _main() -> None:
         args.file, args.msoffset, args.idoffset
     )
     srt: list[str] = []
+    total_size: int = 0
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
-        srt.append(convert_to_ascii(
+        entry: str = convert_to_ascii(
             frame, idx, ms_per_frame, args.collums, args.submsoffset
-        ))
+        )
+        entry_size: int = len(entry)
+        if total_size + entry_size > _MAX_SIZE:
+            print(f"Reached 5 MB limit at frame {idx}")
+            print(end="Stopping subtitle generation.")
+            break
+
+        srt.append(entry)
+        total_size += entry_size
 
     print()
     makedirs("output", exist_ok=True)
