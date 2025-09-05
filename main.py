@@ -41,14 +41,14 @@ def _main() -> None:
         args.file, args.msoffset, args.idoffset
     )
     srt: list[str] = []
-    total_size: int = 0
+    total_size: int = -1
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
         entry: str = convert_to_ascii(
             frame, idx, ms_per_frame, args.collums, args.submsoffset
         )
-        entry_size: int = len(entry)
+        entry_size: int = len(entry) + 1
         if total_size + entry_size > _MAX_SIZE:
             print(f"Reached 5 MB limit at frame {idx}")
             print(end="Stopping subtitle generation.")
