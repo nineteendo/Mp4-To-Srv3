@@ -1,32 +1,33 @@
 # Mp4-To-Srt
-A Python Programm That Converts Mp4 files to Srt files
 
-# How to use
+A Python Programm That Converts Mp4 files to Srt files
 
 ## Requirements
 
 python3, opencv and numpy
 
-### How to install
+## How to install
 
-#### [Python](https://www.python.org/downloads/)
+[Python](https://www.python.org/downloads/)
 
 if you have python setup do
 
-#### pip install opencv-python
-#### pip install  numpy
-#### pip install Pillow
+```shell
+$ pip install -r requirements.txt
+```
 
 ## Example
 
-#### python3 main.py --file "./Bad Apple.mp4" --collums 40 --msoffset 0 --idoffset 0
+```shell
+$ python main.py "Bad Apple.mp4" 40
+```
 
 ## What do The Arguments mean
 
-|Argument|Required|Description|
-|----|-----|-------|
-|--file|Yes|Your input mp4 file|
-|--collums|Yes|How many characters Per Row|
-|--msoffset|No|After How many milliseconds should the animation start|
-|--idoffset|No|At which subtitle id should it start|
-|--submsoffset|No|at which milisecond the subtitles start|
+| Argument        | Required | Description                                            |
+|-----------------|----------|--------------------------------------------------------|
+| `--msoffset`    | No       | After How many milliseconds should the animation start |
+| `--idoffset`    | No       | At which subtitle id should it start                   |
+| `--submsoffset` | No       | At which milisecond the subtitles start                |
+| `file`          | Yes      | Your input mp4 file                                    |
+| `collums`       | Yes      | How many characters Per Row                            |

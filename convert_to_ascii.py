@@ -1,148 +1,74 @@
-# Python code to convert an image to ASCII image.
-import sys, random, argparse
-import numpy as np
-import math
+"""Convert an image to ASCII art."""
+from __future__ import annotations
+import sys
 
+__all__: list[str] = ["convert_to_ascii"]
+
+from math import ceil, floor
+
+import numpy as np
+from numpy.typing import NDArray
 from PIL import Image
 
+_SCALE: float = 0.43
+_CHARS: str = '`"+1nuL0qpdbo8$'
 
 
+def _format_ms(ms: float) -> str:
+    hh, remainder = divmod(int(ms), 3_600_000)
+    mm, remainder = divmod(remainder, 60_000)
+    ss, mss = divmod(remainder, 1_000)
+    return f"{hh:02d}:{mm:02d}:{ss:02d},{mss:03d}"
 
 
-# 10 levels of grey
-gscale2 = '$8obdpq0Lun1+"`'
-def id_to_time_format(id):
-    # Calculate hours, minutes, seconds, and milliseconds
-    hours = int(id // 3600000)  # 1 hour = 3600 seconds * 1000 milliseconds
-    id %= 3600000
-    minutes = int(id // 60000)  # 1 minute = 60 seconds * 1000 milliseconds
-    id %= 60000
-    seconds = int(id // 1000)
-    milliseconds = int(id % 1000)
-
-    # Format the time components as strings with leading zeros
-    time_format = f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
-
-    return time_format
+def _get_avg_brightness(
+    img: Image.Image, box: tuple[int, int, int, int]
+) -> float:
+    arr: NDArray = np.array(img.crop(box))
+    width, height = arr.shape
+    return np.average(arr.reshape(width * height))
 
 
-
-
-
-def getAverageL(image):
-
-	"""
-	Given PIL Image, return average value of grayscale value
-	"""
-	# get image as numpy array
-	im = np.array(image)
-
-	# get shape
-	w,h = im.shape
-
-	# get average
-	return np.average(im.reshape(w*h))
-
-def getEqualWidthScale(scale, width):
-    equal_width_scale = ""
-    for char in scale:
-        equal_width_scale += char + " " * (width - 1)
-    return equal_width_scale
-
-def convertImageToAscii(frame, cols, scale):
-    """
-    Given Image and dims (rows, cols) returns an m*n list of Images 
-    """
-    # declare globals
-    global gscale1, gscale2
-
-    # open image and convert to grayscale
-    image = frame.convert('L')
-
-    # store dimensions
-    W, H = image.size[0], image.size[1]
-    #print("input image dims: %d x %d" % (W, H))
-
-    # compute width of tile
-    w = W / cols
-
-    # compute tile height based on aspect ratio and scale
-    h = w / scale
-
-    # compute number of rows
-    rows = int(H / h)
-
-    #print("cols: %d, rows: %d" % (cols, rows))
-    #print("tile dims: %d x %d" % (w, h))
-
-    # check if image size is too small
-    if cols > W or rows > H:
+# pylint: disable-next=R0914
+def _convert_img_to_ascii(img: Image.Image, cols: int) -> str:
+    img = img.convert('L')
+    width, height = img.size
+    pixel_width: float = width / cols
+    pixel_height: float = pixel_width / _SCALE
+    rows: int = int(height / pixel_height)
+    if cols > width or rows > height:
         print("Image too small for specified cols!")
-        exit(0)
+        sys.exit(1)
 
-    # ascii image is a list of character strings
-    aimg = []
-
-    # generate list of dimensions
+    ascii_img: list[str] = []
     for j in range(rows):
-        y1 = int(j * h)
-        y2 = int((j + 1) * h)
-
-        # correct last tile
-        if j == rows - 1:
-            y2 = H
-
+        y1: int = floor(j * pixel_height)
+        y2: int = ceil((j + 1) * pixel_height)
         for i in range(cols):
+            x1: int = floor(i * pixel_width)
+            x2: int = ceil((i + 1) * pixel_width)
+            avg_brightness: float = _get_avg_brightness(img, (x1, y1, x2, y2))
+            char: str = _CHARS[int(avg_brightness / 255 * (len(_CHARS) - 1))]
+            if char in {'"', '`'}:
+                char += ' '
 
-            # crop image to tile
-            x1 = int(i * w)
-            x2 = int((i + 1) * w)
+            ascii_img.append(char)
 
-            # correct last tile
-            if i == cols - 1:
-                x2 = W
+        ascii_img.append('\n')
 
-            # crop image to extract tile
-            img = image.crop((x1, y1, x2, y2))
-
-            # get average luminance
-            avg = int(getAverageL(img))
-
-            # look up ascii char
-            gsval = gscale2[int(((255-avg) * 14) / 255)]
-            if gsval == '"':
-                gsval = '" '
-            elif gsval == "`":
-                gsval = "` "
-
-            # append ascii char to array
-            aimg.append(gsval)
-
-        aimg.append('\n')
-
-    # return txt image
-    return "".join(aimg)
+    return ''.join(ascii_img)
 
 
-# main() function
-def convert(frame, frame_num, ms_per_frame, clms, submilisecondoffset):
-	rtn = []
-
-	# set scale default as 0.43 which suits
-	# a Courier font
-	scale = 0.43
-
-	# set cols
-	#cols = 40 # 3:30 vids (Bad apple) if you upload your srt file and the subtitle doesn't appear its because the file is too big (5.5 i think is the max)
-	#cols = 56 # 2:00 vids so use less columms if your file is too big
-    #cols = 64 #max res
-	if clms:
-		cols = int(clms)
-	else:
-		print("ERROR"*1000)
-
-	# convert image to ascii txt
-	aimg = convertImageToAscii(frame, cols, scale)
-
-	ms_pos = frame_num * ms_per_frame
-	return f'{frame_num + 1}\n{id_to_time_format(ms_pos + submilisecondoffset)} --> {id_to_time_format(ms_pos + ms_per_frame + submilisecondoffset)}\n{aimg}'
+def convert_to_ascii(
+    frame: Image.Image,
+    frame_num: int,
+    ms_per_frame: float,
+    cols: int,
+    submsoffset: int
+) -> str:
+    """Convert a video frame to an SRT subtitle entry with ASCII art."""
+    ascii_img: str = _convert_img_to_ascii(frame, cols)
+    ms: float = frame_num * ms_per_frame + submsoffset
+    start_time: str = _format_ms(ms)
+    end_time: str = _format_ms(ms + ms_per_frame)
+    return f'{frame_num + 1}\n{start_time} --> {end_time}\n{ascii_img}'

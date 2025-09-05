@@ -1,1 +1,1 @@
-## The SRT file is exported here
+# The SRT file is exported here

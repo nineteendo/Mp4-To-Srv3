@@ -1,47 +1,59 @@
-import convert_to_ascii
-import convert_to_png
-import os
-import argparse
+"""Convert mp4 to srt subtitles using ASCII art."""
+from __future__ import annotations
 
-parser = argparse.ArgumentParser(description="mp4 to srt")
+__all__: list[str] = []
 
-# add expected arguments
-parser.add_argument('--file', dest='file', required=True)
-parser.add_argument('--collums', dest='collums', required=True)
-parser.add_argument('--msoffset', dest='msoffset', required=False)
-parser.add_argument('--submsoffset', dest='submsoffset', required=False)
-parser.add_argument('--idoffset', dest='idoffset', required=False)
+import sys
+from argparse import ArgumentParser, Namespace
+from os import makedirs
+from os.path import exists
 
-args = parser.parse_args()
-if args.file != "":
-    file = args.file
-else:
-    print("no file")
-    exit()
+from convert_to_ascii import convert_to_ascii
+from convert_to_png import convert_to_png, print_progress_bar
 
-#Janky Code
-
-# Use given if it is Truthy, 0 if it is Falsey (empty string)
-idoffset = int(args.idoffset or 0)
-milisecondsoffset = int(args.msoffset or 0)
-
-submilisecondoffset = int(args.submsoffset or 0)
+_OUTPUT_PATH: str = "output/subtitles.srt"
 
 
-if os.path.exists(file):
-    ms_per_frame, total_frames, frames = convert_to_png.convert(file, milisecondsoffset, idoffset)
-else:
-    print("found no file at that location")
-    exit()
+def _parse_args() -> Namespace:
+    parser: ArgumentParser = ArgumentParser(
+        description="Convert mp4 to srt subtitles using ASCII art."
+    )
+    parser.add_argument(
+        '--msoffset', type=int, default=0, help="Milliseconds offset."
+    )
+    parser.add_argument(
+        '--submsoffset', type=int, default=0, help="Sub-milliseconds offset."
+    )
+    parser.add_argument('--idoffset', type=int, default=0, help="ID offset.")
+    parser.add_argument('file', help="Path to the mp4 file.")
+    parser.add_argument('collums', type=int, help="Number of ASCII columns.")
+    return parser.parse_args()
 
-srt = []
-print('Generating Ascii art')
-for x in range(total_frames):
-    convert_to_png.print_progress_bar(x + 1, total_frames)
 
-    srt.append(convert_to_ascii.convert(frames[x], x, ms_per_frame, args.collums, submilisecondoffset))
+def _main() -> None:
+    args: Namespace = _parse_args()
+    if not exists(args.file):
+        print(f"File not found: {args.file}")
+        sys.exit(1)
 
-print()
+    frames, ms_per_frame = convert_to_png(
+        args.file, args.msoffset, args.idoffset
+    )
+    srt: list[str] = []
+    print('Generating ASCII art...')
+    for idx, frame in enumerate(frames):
+        print_progress_bar(idx + 1, len(frames))
+        srt.append(convert_to_ascii(
+            frame, idx, ms_per_frame, args.collums, args.submsoffset
+        ))
 
-#write to file
-open("output/subtitles.srt","w").write("\n".join(srt))
+    print()
+    makedirs("output", exist_ok=True)
+    with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
+        f.write("\n".join(srt))
+
+    print(f"Subtitles written to {_OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    _main()
