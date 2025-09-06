@@ -29,20 +29,16 @@ def _get_avg_brightness(img: Image.Image, box: _Box) -> float:
 
 
 def _get_char(img: Image.Image, box: _Box) -> str:
-    avg_brightness: float = _get_avg_brightness(img, box)
-    char: str = _CHARS[round(avg_brightness / 255 * (len(_CHARS) - 1))]
-    if char in {'"', '`'}:
-        char += ' '
-
-    return char
+    dots: int = round(_get_avg_brightness(img, box) / 255 * (len(_CHARS) - 1))
+    return _CHARS[dots]
 
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
     img = img.convert('L')
     width, height = img.size
     pixel_height: float = height / rows
-    pixel_width: float = pixel_height * _SCALE
-    cols: int = int(width / pixel_width)
+    cols: int = round(width / (pixel_height * _SCALE))
+    pixel_width: float = width / cols
     if cols > width or rows > height:
         print("Image too small for specified rows!")
         sys.exit(1)
