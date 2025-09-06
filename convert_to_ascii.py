@@ -1,9 +1,9 @@
 """Convert an image to ASCII art."""
 from __future__ import annotations
-import sys
 
 __all__: list[str] = ["convert_to_ascii"]
 
+import sys
 from math import ceil, floor
 
 import numpy as np
@@ -29,7 +29,15 @@ def _get_avg_brightness(
     return np.average(arr.reshape(width * height))
 
 
-# pylint: disable-next=R0914
+def _get_char(img: Image.Image, box: tuple[int, int, int, int]) -> str:
+    avg_brightness: float = _get_avg_brightness(img, box)
+    char: str = _CHARS[int(avg_brightness / 255 * (len(_CHARS) - 1))]
+    if char in {'"', '`'}:
+        char += ' '
+
+    return char
+
+
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
     img = img.convert('L')
     width, height = img.size
@@ -47,12 +55,7 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
         for i in range(cols):
             x1: int = floor(i * pixel_width)
             x2: int = ceil((i + 1) * pixel_width)
-            avg_brightness: float = _get_avg_brightness(img, (x1, y1, x2, y2))
-            char: str = _CHARS[int(avg_brightness / 255 * (len(_CHARS) - 1))]
-            if char in {'"', '`'}:
-                char += ' '
-
-            ascii_img.append(char)
+            ascii_img.append(_get_char(img, (x1, y1, x2, y2)))
 
         ascii_img.append('\n')
 
