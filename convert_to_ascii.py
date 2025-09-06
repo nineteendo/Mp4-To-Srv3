@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image
 
 if TYPE_CHECKING:
-    _Box = tuple[int, int, int, int]
+    _Box = tuple[float, float, float, float]
 
 _SCALE: float = 0.43
 _CHARS: str = '⠀⡀⣀⣄⣤⣦⣶⣷⣿'
@@ -35,21 +35,20 @@ def _get_char(img: Image.Image, box: _Box) -> str:
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
     img = img.convert('L')
-    width, height = img.size
-    pixel_height: float = height / rows
-    cols: int = round(width / (pixel_height * _SCALE))
-    pixel_width: float = width / cols
-    if cols > width or rows > height:
+    pixel_height: float = img.height / rows
+    cols: int = round(img.width / (pixel_height * _SCALE))
+    pixel_width: float = img.width / cols
+    if cols > img.width or rows > img.height:
         print("Image too small for specified rows!")
         sys.exit(1)
 
     ascii_img: list[str] = []
     for j in range(rows):
-        y1: int = floor(j * pixel_height)
-        y2: int = ceil((j + 1) * pixel_height)
+        y1: float = j * pixel_height
+        y2: float = (j + 1) * pixel_height
         for i in range(cols):
-            x1: int = floor(i * pixel_width)
-            x2: int = ceil((i + 1) * pixel_width)
+            x1: float = i * pixel_width
+            x2: float = (i + 1) * pixel_width
             ascii_img.append(_get_char(img, (x1, y1, x2, y2)))
 
         ascii_img.append('\n')
