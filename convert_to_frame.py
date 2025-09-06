@@ -1,7 +1,7 @@
 """Convert a video to images."""
 from __future__ import annotations
 
-__all__: list[str] = ["convert_to_png", "print_progress_bar"]
+__all__: list[str] = ["convert_to_frame", "print_progress_bar"]
 
 # pylint: disable-next=E0611
 from cv2 import (
@@ -18,7 +18,7 @@ def print_progress_bar(iteration: int, total: int) -> None:
     print(progress, end='\r', flush=True)
 
 
-def convert_to_png(
+def convert_to_frame(
     vidfile: str, startms: int, idoffset: int
 ) -> tuple[list[Image.Image], float]:
     """

@@ -14,23 +14,46 @@ if TYPE_CHECKING:
     _Box = tuple[float, float, float, float]
 
 _SCALE: float = 0.43
-_CHARS: str = '⠀⡀⣀⣄⣤⣦⣶⣷⣿'
 
 
 def _format_ms(ms: int) -> str:
-    hh, remainder = divmod(ms, 3_600_000)
-    mm, remainder = divmod(remainder, 60_000)
-    ss, mss = divmod(remainder, 1_000)
+    hh, rem = divmod(ms, 3_600_000)
+    mm, rem = divmod(rem, 60_000)
+    ss, mss = divmod(rem, 1_000)
     return f"{hh:02d}:{mm:02d}:{ss:02d},{mss:03d}"
 
 
 def _get_avg_brightness(img: Image.Image, box: _Box) -> float:
+    x1, y1, x2, y2 = box
+    box = floor(x1), floor(y1), ceil(x2), ceil(y2)
     return np.average(np.array(img.crop(box)))
 
 
+# pylint: disable-next=R0914
+def _get_avg_brightnesses(img: Image.Image, box: _Box) -> list[float]:
+    x1, y1, x2, y2 = box
+    sub_pixel_width: float = (x2 - x1) / 2
+    sub_pixel_height: float = (y2 - y1) / 4
+    arr: list[float] = []
+    for j in range(4):
+        sub_y1: float = y1 + j * sub_pixel_height
+        sub_y2: float = y1 + (j + 1) * sub_pixel_height
+        for i in range(2):
+            sub_x1: float = x1 + i * sub_pixel_width
+            sub_x2: float = x1 + (i + 1) * sub_pixel_width
+            sub_box: _Box = sub_x1, sub_y1, sub_x2, sub_y2
+            arr.append(_get_avg_brightness(img, sub_box))
+
+    return arr
+
+
 def _get_char(img: Image.Image, box: _Box) -> str:
-    dots: int = round(_get_avg_brightness(img, box) / 255 * (len(_CHARS) - 1))
-    return _CHARS[dots]
+    dots: int = round(_get_avg_brightness(img, box) / 255 * 8)
+    value: int = 0
+    for idx in np.argsort(_get_avg_brightnesses(img, box))[8 - dots:]:
+        value |= 1 << idx
+
+    return chr(0x2800 + value)
 
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
