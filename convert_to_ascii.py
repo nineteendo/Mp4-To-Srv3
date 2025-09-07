@@ -10,10 +10,10 @@ from math import ceil, floor
 import numpy as np
 from PIL import Image
 
+from convert_to_frames import CHAR_ASPECT_RATIO
+
 if TYPE_CHECKING:
     _Box = tuple[float, float, float, float]
-
-_CHAR_ASPECT_RATIO: float = 5 / 9
 
 
 def _format_ms(ms: int) -> str:
@@ -58,7 +58,7 @@ def _get_char(img: Image.Image, box: _Box) -> str:
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
     img = img.convert('L')
-    cols: int = round(rows / _CHAR_ASPECT_RATIO * img.width / img.height)
+    cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
     pixel_width: float = img.width / cols
     if cols > img.width or rows > img.height:

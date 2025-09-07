@@ -1,7 +1,11 @@
 """Convert a video to images."""
 from __future__ import annotations
 
-__all__: list[str] = ["convert_to_frames", "print_progress_bar"]
+__all__: list[str] = [
+    "CHAR_ASPECT_RATIO", "convert_to_frames", "print_progress_bar"
+]
+
+from math import ceil
 
 # pylint: disable-next=E0611
 from cv2 import (
@@ -10,16 +14,21 @@ from cv2 import (
 )
 from PIL import Image
 
+_MAX_SIZE: int = 5 * 1024 * 1024
+
+CHAR_ASPECT_RATIO: float = 5 / 9
+
 
 def print_progress_bar(iteration: int, total: int) -> None:
     """Prints an in-place progress bar."""
-    percent: str = f"{100 * (iteration / float(total)):.1f}"
-    progress: str = f"Progress: {iteration}/{total} - {percent}%"
+    percentage: float = 100 * iteration / total
+    progress: str = f"Progress: {iteration}/{total} - {percentage:.1f}%"
     print(progress, end='\r', flush=True)
 
 
+# pylint: disable-next=R0914
 def convert_to_frames(
-    vidfile: str, startms: int, idoffset: int
+    vidfile: str, startms: int, idoffset: int, rows: int
 ) -> tuple[list[Image.Image], float]:
     """
     Extract frames from an mp4 file starting at a given offset.
@@ -27,23 +36,33 @@ def convert_to_frames(
     """
     frames: list[Image.Image] = []
     cam: VideoCapture = VideoCapture(vidfile)
-    fps: float = cam.get(CAP_PROP_FPS)
-    ms_per_frame: float = 1000 / fps
+    ms_per_frame: float = 1000 / cam.get(CAP_PROP_FPS)
 
     cam.set(CAP_PROP_POS_MSEC, startms + idoffset * ms_per_frame)
     pos_after_offset: int = int(cam.get(CAP_PROP_POS_FRAMES))
     total_frames: int = int(cam.get(CAP_PROP_FRAME_COUNT)) - pos_after_offset
 
     print('Extracting Frames...')
-    while True:
-        frame_num: int = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
+    frame_num: int = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
+    print_progress_bar(frame_num, total_frames)
+    ret, frame = cam.read()
+    img: Image.Image = Image.fromarray(cvtColor(frame, COLOR_BGR2RGB))
+
+    cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
+    step: int = ceil(total_frames * (
+        len(f"{total_frames}\n")
+        + len("hh:mm:ss,mss --> hh:mm:ss,mss\n")
+        + rows * len((cols * "\u28ff" + "\n").encode())
+    ) / _MAX_SIZE)
+
+    while ret:
+        if not frame_num % step:
+            frames.append(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
+
+        frame_num = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
         print_progress_bar(frame_num, total_frames)
         ret, frame = cam.read()
-        if not ret:
-            break
-
-        frames.append(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
 
     print()
     cam.release()
-    return frames, ms_per_frame
+    return frames, ms_per_frame * step
