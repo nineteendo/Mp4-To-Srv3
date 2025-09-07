@@ -13,13 +13,13 @@ from PIL import Image
 if TYPE_CHECKING:
     _Box = tuple[float, float, float, float]
 
-_SCALE: float = 0.43
+_CHAR_ASPECT_RATIO: float = 5 / 9
 
 
 def _format_ms(ms: int) -> str:
-    hh, rem = divmod(ms, 3_600_000)
-    mm, rem = divmod(rem, 60_000)
-    ss, mss = divmod(rem, 1_000)
+    ss, mss = divmod(ms, 1_000)
+    mm, ss = divmod(ss, 60)
+    hh, mm = divmod(mm, 60)
     return f"{hh:02d}:{mm:02d}:{ss:02d},{mss:03d}"
 
 
@@ -58,8 +58,8 @@ def _get_char(img: Image.Image, box: _Box) -> str:
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
     img = img.convert('L')
+    cols: int = round(rows / _CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
-    cols: int = round(img.width / (pixel_height * _SCALE))
     pixel_width: float = img.width / cols
     if cols > img.width or rows > img.height:
         print("Image too small for specified rows!")

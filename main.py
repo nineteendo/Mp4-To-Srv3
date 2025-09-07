@@ -9,7 +9,7 @@ from os import makedirs
 from os.path import exists
 
 from convert_to_ascii import convert_to_ascii
-from convert_to_frame import convert_to_frame, print_progress_bar
+from convert_to_frames import convert_to_frames, print_progress_bar
 
 _MAX_SIZE: int = 5 * 1024 * 1024
 _OUTPUT_PATH: str = "output/subtitles.srt"
@@ -37,7 +37,7 @@ def _main() -> None:
         print(f"File not found: {args.file}")
         sys.exit(1)
 
-    frames, ms_per_frame = convert_to_frame(
+    frames, ms_per_frame = convert_to_frames(
         args.file, args.msoffset, args.idoffset
     )
     srt: list[bytes] = []
