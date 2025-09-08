@@ -51,7 +51,7 @@ def convert_to_frames(
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     step: int = ceil(total_frames * (
         len(f"{total_frames}\n")
-        + len("hh:mm:ss,mss --> hh:mm:ss,mss\n")
+        + len("hh:mm:ss,ttt --> hh:mm:ss,ttt\n")
         + rows * len((cols * "\u28ff" + "\n").encode())
     ) / _MAX_SIZE)
 

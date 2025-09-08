@@ -17,10 +17,10 @@ if TYPE_CHECKING:
 
 
 def _format_ms(ms: int) -> str:
-    ss, mss = divmod(ms, 1_000)
+    ss, ttt = divmod(ms, 1_000)
     mm, ss = divmod(ss, 60)
     hh, mm = divmod(mm, 60)
-    return f"{hh:02d}:{mm:02d}:{ss:02d},{mss:03d}"
+    return f"{hh:02d}:{mm:02d}:{ss:02d},{ttt:03d}"
 
 
 def _get_avg_brightness(img: Image.Image, box: _Box) -> float:
