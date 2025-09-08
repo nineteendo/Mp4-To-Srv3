@@ -1,6 +1,6 @@
-# Mp4-To-Srt
+# Mp4-To-Sami
 
-A Python Programm That Converts Mp4 files to Srt files
+A Python Programm That Converts Mp4 files to Sami files
 
 ## Requirements
 

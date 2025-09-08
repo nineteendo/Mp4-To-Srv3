@@ -1,1 +1,1 @@
-# The SRT file is exported here
+# The SAMI file is exported here

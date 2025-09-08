@@ -1,4 +1,4 @@
-"""Convert mp4 to srt subtitles using ASCII art."""
+"""Convert mp4 to sami subtitles using ASCII art."""
 from __future__ import annotations
 
 __all__: list[str] = []
@@ -11,12 +11,12 @@ from os.path import exists
 from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
 
-_OUTPUT_PATH: str = "output/subtitles.srt"
+_OUTPUT_PATH: str = "output/subtitles.sami"
 
 
 def _parse_args() -> Namespace:
     parser: ArgumentParser = ArgumentParser(
-        description="Convert mp4 to srt subtitles using ASCII art."
+        description="Convert mp4 to sami subtitles using ASCII art."
     )
     parser.add_argument(
         '--msoffset', type=int, default=0, help="Milliseconds offset."
@@ -39,18 +39,18 @@ def _main() -> None:
     frames, ms_per_frame = convert_to_frames(
         args.file, args.msoffset, args.idoffset, args.rows
     )
-    srt: list[str] = []
+    sami: list[str] = []
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
-        srt.append(convert_to_ascii(
+        sami.append(convert_to_ascii(
             frame, idx, ms_per_frame, args.rows, args.submsoffset
         ))
 
     print()
     makedirs("output", exist_ok=True)
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
-        f.write("\n".join(srt))
+        f.write("\n\n".join(sami))
 
     print(f"Subtitles written to {_OUTPUT_PATH}")
 

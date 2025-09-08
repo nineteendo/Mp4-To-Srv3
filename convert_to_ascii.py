@@ -16,13 +16,6 @@ if TYPE_CHECKING:
     _Box = tuple[float, float, float, float]
 
 
-def _format_ms(ms: int) -> str:
-    ss, ttt = divmod(ms, 1_000)
-    mm, ss = divmod(ss, 60)
-    hh, mm = divmod(mm, 60)
-    return f"{hh:02d}:{mm:02d}:{ss:02d},{ttt:03d}"
-
-
 def _get_avg_brightness(img: Image.Image, box: _Box) -> float:
     x1, y1, x2, y2 = box
     box = floor(x1), floor(y1), ceil(x2), ceil(y2)
@@ -53,7 +46,7 @@ def _get_char(img: Image.Image, box: _Box) -> str:
     for idx in np.argsort(_get_avg_brightnesses(img, box))[8 - dots:]:
         value |= 1 << idx
 
-    return chr(0x2800 + value)
+    return f"<font color='#fff'>{chr(0x2800 + value)}</font>"
 
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
@@ -67,14 +60,15 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
 
     ascii_img: list[str] = []
     for j in range(rows):
+        if j:
+            ascii_img.append('<br>\n')
+
         y1: float = j * pixel_height
         y2: float = (j + 1) * pixel_height
         for i in range(cols):
             x1: float = i * pixel_width
             x2: float = (i + 1) * pixel_width
             ascii_img.append(_get_char(img, (x1, y1, x2, y2)))
-
-        ascii_img.append('\n')
 
     return ''.join(ascii_img)
 
@@ -86,9 +80,7 @@ def convert_to_ascii(
     rows: int,
     submsoffset: int
 ) -> str:
-    """Convert a video frame to an SRT subtitle entry with ASCII art."""
+    """Convert a video frame to an SAMI subtitle entry with ASCII art."""
+    start: float = floor(frame_num * ms_per_frame + submsoffset)
     ascii_img: str = _convert_img_to_ascii(frame, rows)
-    ms: float = frame_num * ms_per_frame + submsoffset
-    start_time: str = _format_ms(floor(ms))
-    end_time: str = _format_ms(ceil(ms + ms_per_frame))
-    return f'{frame_num + 1}\n{start_time} --> {end_time}\n{ascii_img}'
+    return f'<sync start={start}>\n{ascii_img}\n</sync>'
