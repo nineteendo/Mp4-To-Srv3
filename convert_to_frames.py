@@ -14,7 +14,7 @@ from cv2 import (
 )
 from PIL import Image
 
-_MAX_SIZE: int = 5 * 1024 * 1024
+_TARGET_SIZE: float = 1.5 * 9 * 1024 * 1024
 
 CHAR_ASPECT_RATIO: float = 5 / 9
 
@@ -52,11 +52,11 @@ def convert_to_frames(
     step: int = ceil(total_frames * (
         len(f"<sync start={total_frames * ms_per_frame}>\n")
         + rows * len(
-            (cols * "<font color='#fff'>\u28ff</font>" + "<br>\n").encode()
+            (cols * "<font color='#fff'>\u28ff" + "<br>\n").encode()
         )
         - len("<br>")
         + len("</sync>\n\n")
-    ) / _MAX_SIZE)
+    ) / _TARGET_SIZE)
 
     while ret:
         if not frame_num % step:

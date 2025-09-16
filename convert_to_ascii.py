@@ -16,10 +16,26 @@ if TYPE_CHECKING:
     _Box = tuple[float, float, float, float]
 
 
-def _get_avg_brightness(img: Image.Image, box: _Box) -> float:
+def _get_avg_color(img: Image.Image, box: _Box) -> tuple[float, float, float]:
     x1, y1, x2, y2 = box
     box = floor(x1), floor(y1), ceil(x2), ceil(y2)
-    return np.average(np.array(img.crop(box)))
+    return np.mean(np.array(img.crop(box)), (0, 1))
+
+
+def _get_avg_brightness(img: Image.Image, box: _Box) -> float:
+    r, g, b = _get_avg_color(img, box)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def _get_hex_color(img: Image.Image, box: _Box) -> str | None:
+    if not round(_get_avg_brightness(img, box) / 255 * 8):
+        return None
+
+    r, g, b = _get_avg_color(img, box)
+    r = round(r / 255 * 15)
+    g = round(g / 255 * 15)
+    b = round(b / 255 * 15)
+    return f"#{r:x}{g:x}{b:x}"
 
 
 # pylint: disable-next=R0914
@@ -40,17 +56,19 @@ def _get_avg_brightnesses(img: Image.Image, box: _Box) -> list[float]:
     return arr
 
 
-def _get_char(img: Image.Image, box: _Box) -> str:
+def _get_char(img: Image.Image, box: _Box, fast: bool) -> str:
     dots: int = round(_get_avg_brightness(img, box) / 255 * 8)
+    if fast:
+        return "\u28ff" if dots else "\u2800"
+
     value: int = 0
     for idx in np.argsort(_get_avg_brightnesses(img, box))[8 - dots:]:
         value |= 1 << idx
 
-    return f"<font color='#fff'>{chr(0x2800 + value)}</font>"
+    return chr(0x2800 + value)
 
 
-def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
-    img = img.convert('L')
+def _convert_img_to_ascii(img: Image.Image, rows: int, fast: bool) -> str:
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
     pixel_width: float = img.width / cols
@@ -59,6 +77,7 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
         sys.exit(1)
 
     ascii_img: list[str] = []
+    prev_hex_color: str = "#fff"
     for j in range(rows):
         if j:
             ascii_img.append('<br>\n')
@@ -68,19 +87,26 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
         for i in range(cols):
             x1: float = i * pixel_width
             x2: float = (i + 1) * pixel_width
-            ascii_img.append(_get_char(img, (x1, y1, x2, y2)))
+            hex_color: str | None = _get_hex_color(img, (x1, y1, x2, y2))
+            if hex_color and hex_color != prev_hex_color:
+                ascii_img.append(f"<font color='{hex_color}'>")
+                prev_hex_color = hex_color
+
+            ascii_img.append(_get_char(img, (x1, y1, x2, y2), fast))
 
     return ''.join(ascii_img)
 
 
+# pylint: disable-next=R0913, R0917
 def convert_to_ascii(
     frame: Image.Image,
     frame_num: int,
     ms_per_frame: float,
     rows: int,
-    submsoffset: int
+    submsoffset: int,
+    fast: bool
 ) -> str:
     """Convert a video frame to an SAMI subtitle entry with ASCII art."""
     start: float = floor(frame_num * ms_per_frame + submsoffset)
-    ascii_img: str = _convert_img_to_ascii(frame, rows)
+    ascii_img: str = _convert_img_to_ascii(frame, rows, fast)
     return f'<sync start={start}>\n{ascii_img}\n</sync>'
