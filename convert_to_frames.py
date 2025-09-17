@@ -16,7 +16,7 @@ from PIL import Image
 
 _TARGET_SIZE: float = 1.5 * 9 * 1024 * 1024
 
-CHAR_ASPECT_RATIO: float = 5 / 9
+CHAR_ASPECT_RATIO: float = 35 / 58
 
 
 def print_progress_bar(iteration: int, total: int) -> None:
