@@ -90,7 +90,7 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
         sys.exit(1)
 
     ascii_img: list[str] = []
-    prev_hex_color: str = "#fff"
+    hex_colors: list[str] = ["#fff"]
     for j in range(rows):
         if j:
             ascii_img.append('<br>\n')
@@ -101,9 +101,14 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
             x1: float = i * pixel_width
             x2: float = (i + 1) * pixel_width
             hex_color, char = _get_colored_char(img, (x1, y1, x2, y2))
-            if hex_color and hex_color != prev_hex_color:
-                ascii_img.append(f"<font color='{hex_color}'>")
-                prev_hex_color = hex_color
+            assert hex_colors
+            if hex_color and hex_color != hex_colors[-1]:
+                if len(hex_colors) == 1 or hex_color != hex_colors[-2]:
+                    ascii_img.append(f"<font color='{hex_color}'>")
+                    hex_colors.append(hex_color)
+                else:
+                    ascii_img.append("</font>")
+                    hex_colors.pop()
 
             ascii_img.append(char if hex_color else "\u2800")
 
