@@ -24,7 +24,6 @@ def _parse_args() -> Namespace:
     parser.add_argument(
         '--submsoffset', type=int, default=0, help="Sub-milliseconds offset."
     )
-    parser.add_argument('--idoffset', type=int, default=0, help="ID offset.")
 
     parser.add_argument('file', help="Path to the mp4 file.")
     parser.add_argument('rows', type=int, help="Number of ASCII rows.")
@@ -38,7 +37,7 @@ def _main() -> None:
         sys.exit(1)
 
     frames, ms_per_frame = convert_to_frames(
-        args.file, args.msoffset, args.idoffset, args.rows
+        args.file, args.msoffset, args.rows
     )
     sami: list[str] = []
     print('Generating ASCII art...')

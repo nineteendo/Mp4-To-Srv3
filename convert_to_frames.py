@@ -5,7 +5,7 @@ __all__: list[str] = [
     "CHAR_ASPECT_RATIO", "convert_to_frames", "print_progress_bar"
 ]
 
-from math import ceil
+from math import ceil, floor
 
 # pylint: disable-next=E0611
 from cv2 import (
@@ -28,7 +28,7 @@ def print_progress_bar(iteration: int, total: int) -> None:
 
 # pylint: disable-next=R0914
 def convert_to_frames(
-    vidfile: str, startms: int, idoffset: int, rows: int
+    vidfile: str, startms: int, rows: int
 ) -> tuple[list[Image.Image], float]:
     """
     Extract frames from an mp4 file starting at a given offset.
@@ -38,7 +38,7 @@ def convert_to_frames(
     cam: VideoCapture = VideoCapture(vidfile)
     ms_per_frame: float = 1000 / cam.get(CAP_PROP_FPS)
 
-    cam.set(CAP_PROP_POS_MSEC, startms + idoffset * ms_per_frame)
+    cam.set(CAP_PROP_POS_MSEC, startms)
     pos_after_offset: int = int(cam.get(CAP_PROP_POS_FRAMES))
     total_frames: int = int(cam.get(CAP_PROP_FRAME_COUNT)) - pos_after_offset
 
@@ -50,7 +50,7 @@ def convert_to_frames(
 
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     step: int = ceil(total_frames * (
-        len(f"<sync start={total_frames * ms_per_frame}>\n")
+        len(f"<sync start={floor(total_frames * ms_per_frame)}>\n")
         + rows * len(
             (cols * "<font color='#fff'>\u28ff" + "<br>\n").encode()
         )
