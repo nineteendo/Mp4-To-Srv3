@@ -5,7 +5,7 @@ __all__: list[str] = ["convert_to_ascii"]
 
 from typing import TYPE_CHECKING
 import sys
-from math import ceil, floor
+from math import ceil, floor, inf
 
 import numpy as np
 from numpy.typing import NDArray
@@ -50,10 +50,10 @@ def _get_avg_colors(img: Image.Image, box: _Box) -> list[_Color]:
 def _get_best_idxs(colors: NDArray) -> NDArray:
     x: NDArray = np.array(list(map(_color2brightness, colors)))
     all_idxs: NDArray = np.argsort(x)
-    best_dev: float = sum(x)
+    best_dev: float = inf
     best_idxs: NDArray = np.array([])
-    for k in range(1, 9):
-        rem_idxs, idxs = all_idxs[:8 - k], all_idxs[8 - k:]
+    for k in range(8):
+        rem_idxs, idxs = all_idxs[:k], all_idxs[k:]
         dev: float = sum(x[rem_idxs]) + sum(abs(x[idxs] - np.median(x[idxs])))
         if dev < best_dev:
             best_dev = dev
@@ -62,15 +62,15 @@ def _get_best_idxs(colors: NDArray) -> NDArray:
     return best_idxs
 
 
-def _color2hex(color: _Color) -> str | None:
+def _color2hex(color: _Color) -> str:
     r, g, b = color
     r = round(r / 255 * 15)
     g = round(g / 255 * 15)
     b = round(b / 255 * 15)
-    return f"#{r:x}{g:x}{b:x}" if r or g or b else None
+    return f"#{r:x}{g:x}{b:x}"
 
 
-def _get_colored_char(img: Image.Image, box: _Box) -> tuple[str | None, str]:
+def _get_colored_char(img: Image.Image, box: _Box) -> tuple[str, str]:
     colors: NDArray = np.array(_get_avg_colors(img, box))
     idxs: NDArray = _get_best_idxs(colors)
     color: _Color = np.mean(colors[idxs], axis=0) if len(idxs) else (0, 0, 0)
@@ -102,7 +102,7 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
             x2: float = (i + 1) * pixel_width
             hex_color, char = _get_colored_char(img, (x1, y1, x2, y2))
             assert hex_colors
-            if hex_color and hex_color != hex_colors[-1]:
+            if hex_color != hex_colors[-1]:
                 if len(hex_colors) == 1 or hex_color != hex_colors[-2]:
                     ascii_img.append(f"<font color='{hex_color}'>")
                     hex_colors.append(hex_color)
@@ -110,7 +110,7 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
                     ascii_img.append("</font>")
                     hex_colors.pop()
 
-            ascii_img.append(char if hex_color else "\u2800")
+            ascii_img.append(char)
 
     return ''.join(ascii_img)
 
