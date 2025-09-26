@@ -1,4 +1,4 @@
-"""Convert mp4 to sami subtitles using ASCII art."""
+"""Convert mp4 to srv3 subtitles using ASCII art."""
 from __future__ import annotations
 
 __all__: list[str] = []
@@ -11,12 +11,12 @@ from os.path import exists
 from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
 
-_OUTPUT_PATH: str = "output/subtitles.sami"
+_OUTPUT_PATH: str = "output/subtitles.srv3"
 
 
 def _parse_args() -> Namespace:
     parser: ArgumentParser = ArgumentParser(
-        description="Convert mp4 to sami subtitles using ASCII art."
+        description="Convert mp4 to srv3 subtitles using ASCII art."
     )
     parser.add_argument(
         '--msoffset', type=int, default=0, help="Milliseconds offset."
@@ -37,18 +37,28 @@ def _main() -> None:
         sys.exit(1)
 
     frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
-    sami: list[str] = []
+    srv3: list[str] = []
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
-        sami.append(convert_to_ascii(
+        srv3.append(convert_to_ascii(
             frame, idx, fps, args.rows, args.submsoffset
         ))
 
     print()
     makedirs("output", exist_ok=True)
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
-        f.write("\n\n".join(sami))
+        f.write('<timedtext format="3">\n')
+        for color_id in range(4095):
+            if color_id == 4095:
+                hex_color: str = "#fefefe"
+            else:
+                hex_color = f"#{color_id:03x}"
+
+            f.write(f'<pen id={color_id} of=0 fc="{hex_color}"/>\n')
+
+        f.writelines(srv3)
+        f.write("</timedtext>")
 
     print(f"Subtitles written to {_OUTPUT_PATH}")
 

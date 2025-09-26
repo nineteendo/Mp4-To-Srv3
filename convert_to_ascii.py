@@ -62,15 +62,15 @@ def _get_best_idxs(colors: NDArray) -> NDArray:
     return best_idxs
 
 
-def _color2hex(color: _Color) -> str:
+def _color2id(color: _Color) -> int:
     r, g, b = color
     r = round(r / 255 * 15)
     g = round(g / 255 * 15)
     b = round(b / 255 * 15)
-    return f"#{r:x}{g:x}{b:x}"
+    return 256 * r + 16 * g + b
 
 
-def _get_colored_char(img: Image.Image, box: _Box) -> tuple[str, str]:
+def _get_colored_char(img: Image.Image, box: _Box) -> tuple[int, str]:
     colors: NDArray = np.array(_get_avg_colors(img, box))
     idxs: NDArray = _get_best_idxs(colors)
     color: _Color = np.mean(colors[idxs], axis=0) if len(idxs) else (0, 0, 0)
@@ -78,7 +78,7 @@ def _get_colored_char(img: Image.Image, box: _Box) -> tuple[str, str]:
     for idx in idxs:
         value |= 1 << idx
 
-    return _color2hex(color), chr(0x2800 + value)
+    return _color2id(color), chr(0x2800 + value)
 
 
 def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
@@ -90,25 +90,20 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
         sys.exit(1)
 
     ascii_img: list[str] = []
-    hex_colors: list[str] = ["#fff"]
+    prev_color_id: int = -1
     for j in range(rows):
         if j:
-            ascii_img.append('<br>\n')
+            ascii_img.append('\n')
 
         y1: float = j * pixel_height
         y2: float = (j + 1) * pixel_height
         for i in range(cols):
             x1: float = i * pixel_width
             x2: float = (i + 1) * pixel_width
-            hex_color, char = _get_colored_char(img, (x1, y1, x2, y2))
-            assert hex_colors
-            if hex_color != hex_colors[-1]:
-                if len(hex_colors) == 1 or hex_color != hex_colors[-2]:
-                    ascii_img.append(f"<font color='{hex_color}'>")
-                    hex_colors.append(hex_color)
-                else:
-                    ascii_img.append("</font>")
-                    hex_colors.pop()
+            color_id, char = _get_colored_char(img, (x1, y1, x2, y2))
+            if color_id != prev_color_id:
+                ascii_img.append(f"<s p={color_id}>")
+                prev_color_id = color_id
 
             ascii_img.append(char)
 
@@ -122,7 +117,8 @@ def convert_to_ascii(
     rows: int,
     submsoffset: int,
 ) -> str:
-    """Convert a video frame to an SAMI subtitle entry with ASCII art."""
+    """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
     start: float = floor(1000 * frame_num / fps + submsoffset)
+    duration: float = floor(1000 / fps)
     ascii_img: str = _convert_img_to_ascii(frame, rows)
-    return f'<sync start={start}>\n{ascii_img}\n</sync>'
+    return f'<p t={start} d={duration}>{ascii_img}</p>\n'

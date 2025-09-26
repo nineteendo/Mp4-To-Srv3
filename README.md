@@ -1,6 +1,6 @@
-# Mp4-To-Sami
+# Mp4-To-Srv3
 
-A Python Programm That Converts Mp4 files to Sami files
+A Python Programm That Converts Mp4 files to Srv3 files
 
 ## Requirements
 

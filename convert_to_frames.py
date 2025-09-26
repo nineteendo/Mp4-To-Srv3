@@ -50,12 +50,11 @@ def convert_to_frames(
 
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     step: int = ceil(total_frames * (
-        len(f"<sync start={floor(1000 * total_frames / fps)}>\n")
+        len(f"<p t={floor(1000 * total_frames / fps)} d={floor(1000 / fps)}>")
         + rows * len(
-            (cols * "<font color='#fff'>\u28ff" + "<br>\n").encode()
+            (cols * "<s p=4095>\u28ff</s>" + "\n").encode()
         )
-        - len("<br>")
-        + len("</sync>\n\n")
+        + len("</p>\n")
     ) / _TARGET_SIZE)
 
     while ret:
