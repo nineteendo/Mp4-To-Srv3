@@ -51,12 +51,7 @@ def _main() -> None:
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write('<timedtext format="3">\n')
         for color_id, palette_id in palette.items():
-            if color_id == 4095:
-                hex_color: str = "#fefefe"
-            else:
-                hex_color = f"#{color_id:03x}"
-
-            f.write(f'<pen id={palette_id} of=0 fc="{hex_color}">\n')
+            f.write(f'<pen id={palette_id} of=2 fc="#{color_id:03x}">\n')
 
         f.writelines(srv3)
 
