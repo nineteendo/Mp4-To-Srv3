@@ -56,10 +56,9 @@ def _main() -> None:
             else:
                 hex_color = f"#{color_id:03x}"
 
-            f.write(f'<pen id={palette_id} of=0 fc="{hex_color}"/>\n')
+            f.write(f'<pen id={palette_id} of=0 fc="{hex_color}">\n')
 
         f.writelines(srv3)
-        f.write("</timedtext>")
 
     print(f"Subtitles written to {_OUTPUT_PATH}")
 
