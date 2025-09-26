@@ -36,7 +36,7 @@ def convert_to_frames(
     """
     frames: list[Image.Image] = []
     cam: VideoCapture = VideoCapture(vidfile)
-    ms_per_frame: float = 1000 / cam.get(CAP_PROP_FPS)
+    fps: float = cam.get(CAP_PROP_FPS)
 
     cam.set(CAP_PROP_POS_MSEC, startms)
     pos_after_offset: int = int(cam.get(CAP_PROP_POS_FRAMES))
@@ -50,7 +50,7 @@ def convert_to_frames(
 
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     step: int = ceil(total_frames * (
-        len(f"<sync start={floor(total_frames * ms_per_frame)}>\n")
+        len(f"<sync start={floor(1000 * total_frames / fps)}>\n")
         + rows * len(
             (cols * "<font color='#fff'>\u28ff" + "<br>\n").encode()
         )
@@ -68,4 +68,4 @@ def convert_to_frames(
 
     print()
     cam.release()
-    return frames, ms_per_frame * step
+    return frames, fps / step

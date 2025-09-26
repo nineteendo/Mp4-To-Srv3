@@ -36,15 +36,13 @@ def _main() -> None:
         print(f"File not found: {args.file}")
         sys.exit(1)
 
-    frames, ms_per_frame = convert_to_frames(
-        args.file, args.msoffset, args.rows
-    )
+    frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
     sami: list[str] = []
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
         sami.append(convert_to_ascii(
-            frame, idx, ms_per_frame, args.rows, args.submsoffset
+            frame, idx, fps, args.rows, args.submsoffset
         ))
 
     print()

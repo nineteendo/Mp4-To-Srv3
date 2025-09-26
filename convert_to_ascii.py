@@ -118,11 +118,11 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
 def convert_to_ascii(
     frame: Image.Image,
     frame_num: int,
-    ms_per_frame: float,
+    fps: float,
     rows: int,
     submsoffset: int,
 ) -> str:
     """Convert a video frame to an SAMI subtitle entry with ASCII art."""
-    start: float = floor(frame_num * ms_per_frame + submsoffset)
+    start: float = floor(1000 * frame_num / fps + submsoffset)
     ascii_img: str = _convert_img_to_ascii(frame, rows)
     return f'<sync start={start}>\n{ascii_img}\n</sync>'
