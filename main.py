@@ -38,18 +38,19 @@ def _main() -> None:
 
     frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
     srv3: list[str] = []
+    color_ids: set[int] = set()
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
         srv3.append(convert_to_ascii(
-            frame, idx, fps, args.rows, args.submsoffset
+            color_ids, frame, idx, fps, args.rows, args.submsoffset
         ))
 
     print()
     makedirs("output", exist_ok=True)
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write('<timedtext format="3">\n')
-        for color_id in range(4095):
+        for color_id in sorted(color_ids):
             if color_id == 4095:
                 hex_color: str = "#fefefe"
             else:

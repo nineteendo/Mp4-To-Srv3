@@ -81,7 +81,10 @@ def _get_colored_char(img: Image.Image, box: _Box) -> tuple[int, str]:
     return _color2id(color), chr(0x2800 + value)
 
 
-def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
+# pylint: disable-next=R0914
+def _convert_img_to_ascii(
+    color_ids: set[int], img: Image.Image, rows: int
+) -> str:
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
     pixel_width: float = img.width / cols
@@ -104,13 +107,16 @@ def _convert_img_to_ascii(img: Image.Image, rows: int) -> str:
             if color_id != prev_color_id:
                 ascii_img.append(f"<s p={color_id}>")
                 prev_color_id = color_id
+                color_ids.add(color_id)
 
             ascii_img.append(char)
 
     return ''.join(ascii_img)
 
 
+# pylint: disable-next=R0913, R0917
 def convert_to_ascii(
+    color_ids: set[int],
     frame: Image.Image,
     frame_num: int,
     fps: float,
@@ -120,5 +126,5 @@ def convert_to_ascii(
     """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
     start: float = floor(1000 * frame_num / fps + submsoffset)
     duration: float = floor(1000 / fps)
-    ascii_img: str = _convert_img_to_ascii(frame, rows)
+    ascii_img: str = _convert_img_to_ascii(color_ids, frame, rows)
     return f'<p t={start} d={duration}>{ascii_img}</p>\n'
