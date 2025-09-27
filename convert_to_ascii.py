@@ -21,17 +21,17 @@ if TYPE_CHECKING:
 def _get_avg_color(arr: NDArray, box: _Box) -> _Color:
     x1, y1, x2, y2 = box
     x1, y1, x2, y2 = floor(x1), floor(y1), ceil(x2), ceil(y2)
-    total: _Color = arr[y2 - 1, x2 - 1].copy()
+    total_color: _Color = arr[y2 - 1, x2 - 1].copy()
     if x1 > 0 and y1 > 0:
-        total += arr[y1 - 1, x1 - 1]
+        total_color += arr[y1 - 1, x1 - 1]
 
     if y1 > 0:
-        total -= arr[y1 - 1, x2 - 1]
+        total_color -= arr[y1 - 1, x2 - 1]
 
     if x1 > 0:
-        total -= arr[y2 - 1, x1 - 1]
+        total_color -= arr[y2 - 1, x1 - 1]
 
-    return total / ((y2 - y1) * (x2 - x1))
+    return total_color / ((y2 - y1) * (x2 - x1))
 
 
 def _colors2brightnesses(colors: NDArray) -> NDArray:
@@ -43,7 +43,8 @@ def _get_avg_colors(arr: NDArray, box: _Box) -> NDArray:
     x1, y1, x2, y2 = box
     sub_pixel_width: float = (x2 - x1) / 2
     sub_pixel_height: float = (y2 - y1) / 4
-    avg_colors: list[_Color] = []
+    avg_colors: NDArray = np.empty((8, 3))
+    idx: int = 0
     for j in range(4):
         sub_y1: float = y1 + j * sub_pixel_height
         sub_y2: float = sub_y1 + sub_pixel_height
@@ -51,18 +52,19 @@ def _get_avg_colors(arr: NDArray, box: _Box) -> NDArray:
             sub_x1: float = x1 + i * sub_pixel_width
             sub_x2: float = sub_x1 + sub_pixel_width
             sub_box: _Box = sub_x1, sub_y1, sub_x2, sub_y2
-            avg_colors.append(_get_avg_color(arr, sub_box))
+            avg_colors[idx] = _get_avg_color(arr, sub_box)
+            idx += 1
 
-    return np.array(avg_colors)
+    return avg_colors
 
 
 def _median(x: NDArray) -> float:
     n: int = len(x)
     mid: int = n // 2
-    if n % 2 == 0:
-        return (x[mid - 1] + x[mid]) / 2
+    if n % 2:
+        return x[mid]
 
-    return x[mid]
+    return (x[mid - 1] + x[mid]) / 2
 
 
 def _get_dev(x: NDArray) -> float:
@@ -73,15 +75,15 @@ def _get_best_idxs(colors: NDArray) -> NDArray:
     brightnesses: NDArray = _colors2brightnesses(colors)
     all_idxs: NDArray = brightnesses.argsort()
     sorted_brightnesses: NDArray = brightnesses[all_idxs]
-    rem_sum: float = 0
+    rem_dev: float = 0
     best_dev: float = inf
     best_k: int = 0
     for k in range(8):
-        if (dev := rem_sum + _get_dev(sorted_brightnesses[k:])) < best_dev:
+        if (dev := _get_dev(sorted_brightnesses[k:]) + rem_dev) < best_dev:
             best_dev = dev
             best_k = k
 
-        rem_sum += sorted_brightnesses[k]
+        rem_dev += sorted_brightnesses[k]
 
     return all_idxs[best_k:]
 
