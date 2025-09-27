@@ -46,6 +46,15 @@ def _get_avg_colors(arr: NDArray, box: _Box) -> list[_Color]:
     return avg_colors
 
 
+def _median(x: NDArray) -> float:
+    n: int = len(x)
+    mid: int = n // 2
+    if n % 2 == 0:
+        return 0.5 * (x[mid - 1] + x[mid])
+
+    return x[mid]
+
+
 def _get_best_idxs(colors: NDArray) -> NDArray:
     x: NDArray = np.array(list(map(_color2brightness, colors)))
     all_idxs: NDArray = np.argsort(x)
@@ -53,7 +62,7 @@ def _get_best_idxs(colors: NDArray) -> NDArray:
     best_idxs: NDArray = np.array([])
     for k in range(8):
         rem_idxs, idxs = all_idxs[:k], all_idxs[k:]
-        dev: float = sum(x[rem_idxs]) + sum(abs(x[idxs] - np.median(x[idxs])))
+        dev: float = sum(x[rem_idxs]) + sum(abs(x[idxs] - _median(x[idxs])))
         if dev < best_dev:
             best_dev = dev
             best_idxs = idxs
