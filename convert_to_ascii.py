@@ -40,45 +40,49 @@ def _color2brightness(color: _Color) -> float:
 
 
 # pylint: disable-next=R0914
-def _get_avg_colors(arr: NDArray, box: _Box) -> list[_Color]:
+def _get_avg_colors(arr: NDArray, box: _Box) -> NDArray:
     x1, y1, x2, y2 = box
     sub_pixel_width: float = (x2 - x1) / 2
     sub_pixel_height: float = (y2 - y1) / 4
     avg_colors: list[_Color] = []
     for j in range(4):
         sub_y1: float = y1 + j * sub_pixel_height
-        sub_y2: float = y1 + (j + 1) * sub_pixel_height
+        sub_y2: float = sub_y1 + sub_pixel_height
         for i in range(2):
             sub_x1: float = x1 + i * sub_pixel_width
-            sub_x2: float = x1 + (i + 1) * sub_pixel_width
+            sub_x2: float = sub_x1 + sub_pixel_width
             sub_box: _Box = sub_x1, sub_y1, sub_x2, sub_y2
             avg_colors.append(_get_avg_color(arr, sub_box))
 
-    return avg_colors
+    return np.array(avg_colors)
 
 
 def _median(x: NDArray) -> float:
     n: int = len(x)
     mid: int = n // 2
     if n % 2 == 0:
-        return 0.5 * (x[mid - 1] + x[mid])
+        return (x[mid - 1] + x[mid]) / 2
 
     return x[mid]
 
 
+def _get_dev(x: NDArray) -> float:
+    return abs(x - _median(x)).sum()
+
+
 def _get_best_idxs(colors: NDArray) -> NDArray:
-    x: NDArray = np.array(list(map(_color2brightness, colors)))
-    all_idxs: NDArray = np.argsort(x)
-    sx: NDArray = x[all_idxs]
+    brightnesses: NDArray = np.array(list(map(_color2brightness, colors)))
+    all_idxs: NDArray = brightnesses.argsort()
+    sorted_brightnesses: NDArray = brightnesses[all_idxs]
     rem_sum: float = 0
     best_dev: float = inf
     best_k: int = 0
     for k in range(8):
-        if (dev := rem_sum + abs(sx[k:] - _median(sx[k:])).sum()) < best_dev:
+        if (dev := rem_sum + _get_dev(sorted_brightnesses[k:])) < best_dev:
             best_dev = dev
             best_k = k
 
-        rem_sum += sx[k]
+        rem_sum += sorted_brightnesses[k]
 
     return all_idxs[best_k:]
 
@@ -92,14 +96,14 @@ def _color2id(color: _Color) -> int:
 
 
 def _get_colored_char(arr: NDArray, box: _Box) -> tuple[int, str]:
-    colors: NDArray = np.array(_get_avg_colors(arr, box))
+    colors: NDArray = _get_avg_colors(arr, box)
     idxs: NDArray = _get_best_idxs(colors)
-    color: _Color = np.mean(colors[idxs], axis=0) if len(idxs) else (0, 0, 0)
-    value: int = 0
+    color_id: int = _color2id(colors[idxs].mean(0)) if len(idxs) else 0
+    value: int = 0x2800
     for idx in idxs:
         value |= 1 << idx
 
-    return _color2id(color), chr(0x2800 + value)
+    return color_id, chr(value)
 
 
 # pylint: disable-next=R0914
