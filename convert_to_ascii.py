@@ -34,10 +34,6 @@ def _get_avg_color(arr: NDArray, box: _Box) -> _Color:
     return total_color / ((y2 - y1) * (x2 - x1))
 
 
-def _colors2brightnesses(colors: NDArray) -> NDArray:
-    return np.array([0.299 * r + 0.587 * g + 0.114 * b for r, g, b in colors])
-
-
 # pylint: disable-next=R0914
 def _get_avg_colors(arr: NDArray, box: _Box) -> NDArray:
     x1, y1, x2, y2 = box
@@ -58,21 +54,15 @@ def _get_avg_colors(arr: NDArray, box: _Box) -> NDArray:
     return avg_colors
 
 
-def _median(x: NDArray) -> float:
+def _get_dev(x: NDArray) -> float:
     n: int = len(x)
     mid: int = n // 2
-    if n % 2:
-        return x[mid]
-
-    return (x[mid - 1] + x[mid]) / 2
-
-
-def _get_dev(x: NDArray) -> float:
-    return abs(x - _median(x)).sum()
+    med: float = x[mid] if n % 2 else (x[mid - 1] + x[mid]) / 2
+    return abs(x - med).sum()
 
 
 def _get_best_idxs(colors: NDArray) -> NDArray:
-    brightnesses: NDArray = _colors2brightnesses(colors)
+    brightnesses: NDArray = np.dot(colors, [0.299, 0.587, 0.114])
     all_idxs: NDArray = brightnesses.argsort()
     sorted_brightnesses: NDArray = brightnesses[all_idxs]
     rem_dev: float = 0
