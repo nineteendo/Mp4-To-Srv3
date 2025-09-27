@@ -20,7 +20,18 @@ if TYPE_CHECKING:
 
 def _get_avg_color(arr: NDArray, box: _Box) -> _Color:
     x1, y1, x2, y2 = box
-    return arr[floor(y1):ceil(y2), floor(x1):ceil(x2)].mean((0, 1))
+    x1, y1, x2, y2 = floor(x1), floor(y1), ceil(x2), ceil(y2)
+    total: NDArray = arr[y2 - 1, x2 - 1].copy()
+    if x1 > 0 and y1 > 0:
+        total += arr[y1 - 1, x1 - 1]
+
+    if y1 > 0:
+        total -= arr[y1 - 1, x2 - 1]
+
+    if x1 > 0:
+        total -= arr[y2 - 1, x1 - 1]
+
+    return tuple(total / ((y2 - y1) * (x2 - x1)))  # type: ignore
 
 
 def _color2brightness(color: _Color) -> float:
@@ -93,7 +104,7 @@ def _get_colored_char(arr: NDArray, box: _Box) -> tuple[int, str]:
 def _convert_img_to_ascii(
     palette: dict[int, int], img: Image.Image, rows: int
 ) -> str:
-    arr: NDArray = np.array(img)
+    arr: NDArray = np.array(img).cumsum(axis=0).cumsum(axis=1)
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
     pixel_width: float = img.width / cols
