@@ -69,16 +69,18 @@ def _median(x: NDArray) -> float:
 def _get_best_idxs(colors: NDArray) -> NDArray:
     x: NDArray = np.array(list(map(_color2brightness, colors)))
     all_idxs: NDArray = np.argsort(x)
+    sx: NDArray = x[all_idxs]
+    rem_sum: float = 0
     best_dev: float = inf
-    best_idxs: NDArray = np.array([])
+    best_k: int = 0
     for k in range(8):
-        rem_idxs, idxs = all_idxs[:k], all_idxs[k:]
-        dev: float = sum(x[rem_idxs]) + sum(abs(x[idxs] - _median(x[idxs])))
-        if dev < best_dev:
+        if (dev := rem_sum + abs(sx[k:] - _median(sx[k:])).sum()) < best_dev:
             best_dev = dev
-            best_idxs = idxs
+            best_k = k
 
-    return best_idxs
+        rem_sum += sx[k]
+
+    return all_idxs[best_k:]
 
 
 def _color2id(color: _Color) -> int:
