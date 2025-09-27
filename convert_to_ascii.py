@@ -18,10 +18,9 @@ if TYPE_CHECKING:
     _Color = tuple[float, float, float]
 
 
-def _get_avg_color(img: Image.Image, box: _Box) -> _Color:
+def _get_avg_color(arr: NDArray, box: _Box) -> _Color:
     x1, y1, x2, y2 = box
-    box = floor(x1), floor(y1), ceil(x2), ceil(y2)
-    return np.mean(np.array(img.crop(box)), (0, 1))
+    return arr[floor(y1):ceil(y2), floor(x1):ceil(x2)].mean((0, 1))
 
 
 def _color2brightness(color: _Color) -> float:
@@ -30,11 +29,11 @@ def _color2brightness(color: _Color) -> float:
 
 
 # pylint: disable-next=R0914
-def _get_avg_colors(img: Image.Image, box: _Box) -> list[_Color]:
+def _get_avg_colors(arr: NDArray, box: _Box) -> list[_Color]:
     x1, y1, x2, y2 = box
     sub_pixel_width: float = (x2 - x1) / 2
     sub_pixel_height: float = (y2 - y1) / 4
-    arr: list[_Color] = []
+    avg_colors: list[_Color] = []
     for j in range(4):
         sub_y1: float = y1 + j * sub_pixel_height
         sub_y2: float = y1 + (j + 1) * sub_pixel_height
@@ -42,9 +41,9 @@ def _get_avg_colors(img: Image.Image, box: _Box) -> list[_Color]:
             sub_x1: float = x1 + i * sub_pixel_width
             sub_x2: float = x1 + (i + 1) * sub_pixel_width
             sub_box: _Box = sub_x1, sub_y1, sub_x2, sub_y2
-            arr.append(_get_avg_color(img, sub_box))
+            avg_colors.append(_get_avg_color(arr, sub_box))
 
-    return arr
+    return avg_colors
 
 
 def _get_best_idxs(colors: NDArray) -> NDArray:
@@ -70,8 +69,8 @@ def _color2id(color: _Color) -> int:
     return 256 * r + 16 * g + b
 
 
-def _get_colored_char(img: Image.Image, box: _Box) -> tuple[int, str]:
-    colors: NDArray = np.array(_get_avg_colors(img, box))
+def _get_colored_char(arr: NDArray, box: _Box) -> tuple[int, str]:
+    colors: NDArray = np.array(_get_avg_colors(arr, box))
     idxs: NDArray = _get_best_idxs(colors)
     color: _Color = np.mean(colors[idxs], axis=0) if len(idxs) else (0, 0, 0)
     value: int = 0
@@ -85,6 +84,7 @@ def _get_colored_char(img: Image.Image, box: _Box) -> tuple[int, str]:
 def _convert_img_to_ascii(
     palette: dict[int, int], img: Image.Image, rows: int
 ) -> str:
+    arr: NDArray = np.array(img)
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
     pixel_width: float = img.width / cols
@@ -103,7 +103,7 @@ def _convert_img_to_ascii(
         for i in range(cols):
             x1: float = i * pixel_width
             x2: float = (i + 1) * pixel_width
-            color_id, char = _get_colored_char(img, (x1, y1, x2, y2))
+            color_id, char = _get_colored_char(arr, (x1, y1, x2, y2))
             if color_id != prev_color_id:
                 palette_id: int = palette.setdefault(color_id, len(palette))
                 ascii_img.append(f"<s p={palette_id}>")
