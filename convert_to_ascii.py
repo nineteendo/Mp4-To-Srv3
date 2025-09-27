@@ -15,13 +15,13 @@ from convert_to_frames import CHAR_ASPECT_RATIO
 
 if TYPE_CHECKING:
     _Box = tuple[float, float, float, float]
-    _Color = tuple[float, float, float]
+    _Color = NDArray
 
 
 def _get_avg_color(arr: NDArray, box: _Box) -> _Color:
     x1, y1, x2, y2 = box
     x1, y1, x2, y2 = floor(x1), floor(y1), ceil(x2), ceil(y2)
-    total: NDArray = arr[y2 - 1, x2 - 1].copy()
+    total: _Color = arr[y2 - 1, x2 - 1].copy()
     if x1 > 0 and y1 > 0:
         total += arr[y1 - 1, x1 - 1]
 
@@ -31,7 +31,7 @@ def _get_avg_color(arr: NDArray, box: _Box) -> _Color:
     if x1 > 0:
         total -= arr[y2 - 1, x1 - 1]
 
-    return tuple(total / ((y2 - y1) * (x2 - x1)))  # type: ignore
+    return total / ((y2 - y1) * (x2 - x1))
 
 
 def _color2brightness(color: _Color) -> float:
