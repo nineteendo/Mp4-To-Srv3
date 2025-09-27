@@ -28,5 +28,6 @@ $ python main.py "Bad Apple.mp4" 12
 |-----------------|----------|--------------------------------------------------------|
 | `--msoffset`    | No       | After how many milliseconds should the animation start |
 | `--submsoffset` | No       | At which milisecond the subtitles start                |
+| `--image`       | No       | Load an image                                          |
 | `file`          | Yes      | Your input mp4 file                                    |
 | `rows`          | Yes      | How many characters Per Column                         |
