@@ -8,8 +8,6 @@ from argparse import ArgumentParser, Namespace
 from os import makedirs
 from os.path import exists
 
-from PIL import Image
-
 from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
 
@@ -26,7 +24,6 @@ def _parse_args() -> Namespace:
     parser.add_argument(
         '--submsoffset', type=int, default=0, help="Sub-milliseconds offset."
     )
-    parser.add_argument('--image', action="store_true", help="Load image.")
 
     parser.add_argument('file', help="Path to the mp4 file.")
     parser.add_argument('rows', type=int, help="Number of ASCII rows.")
@@ -39,11 +36,7 @@ def _main() -> None:
         print(f"File not found: {args.file}")
         sys.exit(1)
 
-    if not args.image:
-        frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
-    else:
-        frames, fps = [Image.open(args.file)], 1 / 5
-
+    frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
     srv3: list[str] = []
     palette: dict[int, int] = {}
     print('Generating ASCII art...')

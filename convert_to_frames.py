@@ -40,7 +40,9 @@ def convert_to_frames(
 
     cam.set(CAP_PROP_POS_MSEC, startms)
     pos_after_offset: int = int(cam.get(CAP_PROP_POS_FRAMES))
-    total_frames: int = int(cam.get(CAP_PROP_FRAME_COUNT)) - pos_after_offset
+    total_frames: int = max(
+        1, int(cam.get(CAP_PROP_FRAME_COUNT) - pos_after_offset)
+    )
 
     print('Extracting Frames...')
     frame_num: int = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
@@ -65,4 +67,7 @@ def convert_to_frames(
 
     print()
     cam.release()
-    return frames, fps / step
+    if total_frames > 1:
+        return frames, fps / step
+
+    return frames, 1 / 5
