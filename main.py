@@ -52,7 +52,7 @@ def _main() -> None:
         f.write('<timedtext format="3">\n')
         for color_id, palette_id in palette.items():
             f.write(
-                f'<pen id={palette_id} of=2 fc="#{color_id:03x}" '
+                f'<pen id={palette_id} bo=0 et=1 of=2 fc="#{color_id:03x}" '
                 f'ec="#{color_id:03x}">\n'
             )
 
