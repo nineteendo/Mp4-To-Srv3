@@ -58,7 +58,10 @@ def _main() -> None:
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write('<timedtext format="3">\n')
         for color_id, palette_id in palette.items():
-            f.write(f'<pen id={palette_id} of=2 fc="#{color_id:03x}">\n')
+            f.write(
+                f'<pen id={palette_id} of=2 fc="#{color_id:03x}" '
+                f'ec="#{color_id:03x}">\n'
+            )
 
         f.writelines(srv3)
 
