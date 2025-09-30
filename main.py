@@ -50,13 +50,18 @@ def _main() -> None:
     makedirs("output", exist_ok=True)
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write('<timedtext format="3">\n')
+        f.write('<head>\n')
         for color_id, palette_id in palette.items():
             f.write(
                 f'<pen id={palette_id} bo=0 et=1 of=2 fc="#{color_id:03x}" '
                 f'ec="#{color_id:03x}">\n'
             )
 
+        f.write('</head>\n')
+        f.write('<body>\n')
         f.writelines(srv3)
+        f.write('</body>\n')
+        f.write('</timedtext>')
 
     print(f"Subtitles written to {_OUTPUT_PATH}")
 
