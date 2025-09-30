@@ -52,7 +52,10 @@ def convert_to_frames(
 
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     step: int = ceil(total_frames * (
-        len(f"<p t={floor(1000 * total_frames / fps)} d={floor(1000 / fps)}>")
+        len(
+            f"<p t={floor(1000 * total_frames / fps)} d={floor(1000 / fps)} "
+            "wp=0>"
+        )
         + rows * len((cols * "<s p=4095>\u28ff" + "\n").encode())
         + len("</p>\n")
     ) / _TARGET_SIZE)

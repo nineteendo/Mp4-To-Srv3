@@ -57,6 +57,7 @@ def _main() -> None:
                 f'ec="#{color_id:03x}">\n'
             )
 
+        f.write('<wp id=0 ap=4 ah=50 av=50>\n')
         f.write('</head>\n')
         f.write('<body>\n')
         f.writelines(srv3)

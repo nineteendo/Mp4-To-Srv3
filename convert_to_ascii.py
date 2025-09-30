@@ -144,4 +144,4 @@ def convert_to_ascii(
     start: float = floor(1000 * frame_num / fps + submsoffset)
     duration: float = floor(1000 / fps)
     ascii_img: str = _convert_img_to_ascii(palette, frame, rows)
-    return f'<p t={start} d={duration}>{ascii_img}</p>\n'
+    return f'<p t={start} d={duration} wp=0>{ascii_img}</p>\n'
