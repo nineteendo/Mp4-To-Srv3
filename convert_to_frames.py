@@ -14,7 +14,7 @@ from cv2 import (
 )
 from PIL import Image
 
-_TARGET_SIZE: float = 1.5 * 9 * 1024 * 1024
+_TARGET_SIZE: float = 1.4 * 9 * 1024 * 1024
 
 CHAR_ASPECT_RATIO: float = 35 / 58
 
