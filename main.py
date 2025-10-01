@@ -52,7 +52,7 @@ def _main() -> None:
         f.write('<timedtext format="3">\n')
         f.write('<head>\n')
         for color_id, palette_id in palette.items():
-            offset: int = 2 if args.rows > 36 else 1
+            offset: int = 2 if args.rows > 30 else 1
             f.write(
                 f'<pen id={palette_id} bo=0 et=1 of={offset} '
                 f'fc="#{color_id:03x}" ec="#{color_id:03x}">\n'
