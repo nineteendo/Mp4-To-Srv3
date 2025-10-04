@@ -100,7 +100,7 @@ def _get_colored_char(arr: NDArray, box: _Box) -> tuple[int, str]:
 # pylint: disable-next=R0914
 def _convert_img_to_ascii(
     palette: dict[int, int], img: Image.Image, rows: int
-) -> str:
+) -> tuple[int, str]:
     arr: NDArray = np.array(img).cumsum(axis=0).cumsum(axis=1)
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     pixel_height: float = img.height / rows
@@ -111,6 +111,7 @@ def _convert_img_to_ascii(
 
     ascii_img: list[str] = []
     prev_color_id: int = -1
+    first_palette_id: int = -1
     for j in range(rows):
         if j:
             ascii_img.append('\n')
@@ -123,12 +124,18 @@ def _convert_img_to_ascii(
             color_id, char = _get_colored_char(arr, (x1, y1, x2, y2))
             if color_id != prev_color_id:
                 palette_id: int = palette.setdefault(color_id, len(palette))
-                ascii_img.append(f"<s p={palette_id}>")
+                if first_palette_id == -1:
+                    first_palette_id = palette_id
+                elif palette_id == first_palette_id:
+                    ascii_img.append("<s>")
+                else:
+                    ascii_img.append(f"<s p={palette_id}>")
+
                 prev_color_id = color_id
 
             ascii_img.append(char)
 
-    return ''.join(ascii_img)
+    return first_palette_id, ''.join(ascii_img)
 
 
 # pylint: disable-next=R0913, R0917
@@ -143,5 +150,7 @@ def convert_to_ascii(
     """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
     start: float = floor(1000 * frame_num / fps + submsoffset)
     duration: float = floor(1000 / fps)
-    ascii_img: str = _convert_img_to_ascii(palette, frame, rows)
-    return f'<p t={start} d={duration} wp=0 ws=0>{ascii_img}</p>\n'
+    palette_id, ascii_img = _convert_img_to_ascii(palette, frame, rows)
+    return (
+        f'<p t={start} d={duration} wp=0 ws=0 p={palette_id}>{ascii_img}</p>\n'
+    )
