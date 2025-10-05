@@ -7,6 +7,7 @@ import sys
 from argparse import ArgumentParser, Namespace
 from os import makedirs
 from os.path import exists
+from typing import Any
 
 from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
@@ -37,14 +38,22 @@ def _main() -> None:
         sys.exit(1)
 
     frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
-    srv3: list[str] = []
+    entries: list[dict[str, Any]] = []
     palette: dict[int, int] = {}
     print('Generating ASCII art...')
     for idx, frame in enumerate(frames):
         print_progress_bar(idx + 1, len(frames))
-        srv3.append(convert_to_ascii(
+        entry: dict[str, Any] = convert_to_ascii(
             palette, frame, idx, fps, args.rows, args.submsoffset
-        ))
+        )
+        if (
+            entries
+            and entry['palette_id'] == entries[-1]['palette_id']
+            and entry['ascii_img'] == entries[-1]['ascii_img']
+        ):
+            entries[-1]['duration'] += entry['duration']
+        else:
+            entries.append(entry)
 
     print()
     makedirs("output", exist_ok=True)
@@ -66,7 +75,12 @@ def _main() -> None:
         f.write('<wp id=0 ap=4 ah=50 av=50>\n')
         f.write('</head>\n')
         f.write('<body>\n')
-        f.writelines(srv3)
+        for entry in entries:
+            f.write(
+                f"<p t={entry['start']} d={entry['duration']} wp=0 ws=0 "
+                f"p={entry['palette_id']}>{entry['ascii_img']}</p>\n"
+            )
+
         f.write('</body>\n')
         f.write('</timedtext>')
 

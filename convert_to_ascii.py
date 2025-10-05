@@ -3,7 +3,7 @@ from __future__ import annotations
 
 __all__: list[str] = ["convert_to_ascii"]
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import sys
 from math import ceil, floor, inf
 
@@ -146,11 +146,14 @@ def convert_to_ascii(
     fps: float,
     rows: int,
     submsoffset: int,
-) -> str:
+) -> dict[str, Any]:
     """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
-    start: float = floor(1000 * frame_num / fps + submsoffset)
-    duration: float = floor(1000 / fps)
+    start: int = floor(1000 * frame_num / fps + submsoffset)
+    duration: int = floor(1000 / fps)
     palette_id, ascii_img = _convert_img_to_ascii(palette, frame, rows)
-    return (
-        f'<p t={start} d={duration} wp=0 ws=0 p={palette_id}>{ascii_img}</p>\n'
-    )
+    return {
+        "start": start,
+        "duration": duration,
+        "palette_id": palette_id,
+        "ascii_img": ascii_img
+    }
