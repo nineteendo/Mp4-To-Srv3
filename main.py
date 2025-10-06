@@ -79,10 +79,13 @@ def _main() -> None:
 
         if args.rows > 48:
             f.write('<ws id=0 pd=3 sd=0>\n')
+            f.write('<wp id=0 ap=4 ah=50 av=50>\n')
+            f.write('<wp id=1 ap=5 ah=100 av=50>\n')
         else:
             f.write('<ws id=0>\n')
+            f.write('<wp id=0 ap=4 ah=50 av=50>\n')
+            f.write('<wp id=1 ap=7 ah=50 av=100>\n')
 
-        f.write('<wp id=0 ap=4 ah=50 av=50>\n')
         f.write('</head>\n')
         f.write('<body>\n')
         for entry in entries:

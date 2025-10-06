@@ -11,7 +11,9 @@ from pysrt import SubRipItem  # type: ignore
 def _append_subtitle(
     subtitles: list[str], start: float, duration: float, text: str
 ) -> None:
-    subtitles.append(f"<p t={ceil(start)} d={floor(duration)}>{text}</p>\n")
+    subtitles.append(
+        f"<p t={ceil(start)} d={floor(duration)} wp=1 ws=0>{text}</p>\n"
+    )
 
 
 def split_subtitle(sub: SubRipItem, fps: float, submsoffset: int) -> list[str]:
