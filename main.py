@@ -10,8 +10,11 @@ from os import makedirs
 from os.path import exists
 from typing import Any
 
+from pysrt import SubRipFile  # type: ignore
+
 from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
+from split_subtitle import split_subtitle
 
 _OUTPUT_PATH: str = "output/subtitles.srv3"
 
@@ -28,6 +31,7 @@ def _parse_args() -> Namespace:
     )
 
     parser.add_argument('file', help="Path to the mp4 file.")
+    parser.add_argument('subfile', help="Path to the subtitle file.")
     parser.add_argument('rows', type=int, help="Number of ASCII rows.")
     return parser.parse_args()
 
@@ -56,6 +60,11 @@ def _main() -> None:
         else:
             entries.append(entry)
 
+    meta_subtitles: list[str] = []
+    with open(args.subfile, "r", encoding="utf-8") as f:
+        for sub in SubRipFile.stream(f):
+            meta_subtitles.extend(split_subtitle(sub, fps, args.submsoffset))
+
     print()
     makedirs("output", exist_ok=True)
     with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
@@ -82,6 +91,7 @@ def _main() -> None:
                 f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>\n"
             )
 
+        f.writelines(meta_subtitles)
         f.write('</body>\n')
         f.write('</timedtext>')
 

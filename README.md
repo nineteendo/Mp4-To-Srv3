@@ -19,7 +19,7 @@ $ pip install -r requirements.txt
 ## Example
 
 ```shell
-$ python main.py "Bad Apple.mp4" 12
+$ python main.py "Bad Apple.mp4" "Bad Apple.srt" 12
 ```
 
 ## What do The Arguments mean
@@ -29,4 +29,5 @@ $ python main.py "Bad Apple.mp4" 12
 | `--msoffset`    | No       | After how many milliseconds should the animation start |
 | `--submsoffset` | No       | At which milisecond the subtitles start                |
 | `file`          | Yes      | Your input mp4 file                                    |
+| `subfile`       | Yes      | Your input subtitle file                               |
 | `rows`          | Yes      | How many characters Per Column                         |
