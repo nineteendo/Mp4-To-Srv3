@@ -63,7 +63,10 @@ def _main() -> None:
     meta_subtitles: list[str] = []
     with open(args.subfile, "r", encoding="utf-8") as f:
         for sub in SubRipFile.stream(f):
-            meta_subtitles.extend(split_subtitle(sub, fps, args.submsoffset))
+            if sub.text.strip():
+                meta_subtitles.extend(
+                    split_subtitle(sub, fps, args.submsoffset)
+                )
 
     print()
     makedirs("output", exist_ok=True)
