@@ -5,6 +5,7 @@ __all__: list[str] = []
 
 import sys
 from argparse import ArgumentParser, Namespace
+from math import ceil, floor
 from os import makedirs
 from os.path import exists
 from typing import Any
@@ -77,8 +78,8 @@ def _main() -> None:
         f.write('<body>\n')
         for entry in entries:
             f.write(
-                f"<p t={entry['start']} d={entry['duration']} wp=0 ws=0 "
-                f"p={entry['palette_id']}>{entry['ascii_img']}</p>\n"
+                f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
+                f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>\n"
             )
 
         f.write('</body>\n')

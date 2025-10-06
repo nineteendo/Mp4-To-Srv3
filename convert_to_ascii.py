@@ -148,8 +148,8 @@ def convert_to_ascii(
     submsoffset: int,
 ) -> dict[str, Any]:
     """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
-    start: int = floor(1000 * frame_num / fps + submsoffset)
-    duration: int = floor(1000 / fps)
+    start: float = 1000 * frame_num / fps + submsoffset
+    duration: float = 1000 / fps
     palette_id, ascii_img = _convert_img_to_ascii(palette, frame, rows)
     return {
         "start": start,
