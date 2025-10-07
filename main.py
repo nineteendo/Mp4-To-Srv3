@@ -76,8 +76,8 @@ def _main() -> None:
         for color_id, palette_id in palette.items():
             offset: int = 2 if args.rows > 30 else 1
             f.write(
-                f'<pen id={palette_id} bo=0 et=1 of={offset} '
-                f'fc="#{color_id:03x}" ec="#{color_id:03x}">\n'
+                f'<pen id={palette_id} bo=0 of={offset} fc="#{color_id:03x}" '
+                f'ec="#{color_id:03x}">\n'
             )
 
         if args.rows > 48:
@@ -85,7 +85,7 @@ def _main() -> None:
             f.write('<wp id=0 ap=4 ah=50 av=50>\n')
             f.write('<wp id=1 ap=5 ah=100 av=50>\n')
         else:
-            f.write('<ws id=0>\n')
+            f.write('<ws id=0 pd=0 sd=0>\n')
             f.write('<wp id=0 ap=4 ah=50 av=50>\n')
             f.write('<wp id=1 ap=7 ah=50 av=100>\n')
 
