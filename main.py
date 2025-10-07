@@ -26,12 +26,12 @@ def _parse_args() -> Namespace:
     parser.add_argument(
         '--msoffset', type=int, default=0, help="Milliseconds offset."
     )
+    parser.add_argument('--subfile', help="Path to the subtitle file.")
     parser.add_argument(
         '--submsoffset', type=int, default=0, help="Sub-milliseconds offset."
     )
 
     parser.add_argument('file', help="Path to the mp4 file.")
-    parser.add_argument('subfile', help="Path to the subtitle file.")
     parser.add_argument('rows', type=int, help="Number of ASCII rows.")
     return parser.parse_args()
 
@@ -61,12 +61,13 @@ def _main() -> None:
             entries.append(entry)
 
     meta_subtitles: list[str] = []
-    with open(args.subfile, "r", encoding="utf-8") as f:
-        for sub in SubRipFile.stream(f):
-            if sub.text.strip():
-                meta_subtitles.extend(
-                    split_subtitle(sub, fps, args.submsoffset)
-                )
+    if args.subfile is not None:
+        with open(args.subfile, "r", encoding="utf-8") as f:
+            for sub in SubRipFile.stream(f):
+                if sub.text.strip():
+                    meta_subtitles.extend(
+                        split_subtitle(sub, fps, args.submsoffset)
+                    )
 
     print()
     makedirs("output", exist_ok=True)
