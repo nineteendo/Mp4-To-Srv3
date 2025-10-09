@@ -42,7 +42,7 @@ def _main() -> None:
         print(f"File not found: {args.file}")
         sys.exit(1)
 
-    frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
+    frames_list, fps = convert_to_frames(args.file, args.msoffset, args.rows)
     meta_subtitles: list[str] = []
     if args.subfile is not None:
         with open(args.subfile, "r", encoding="utf-8") as f:
@@ -55,10 +55,10 @@ def _main() -> None:
     entries: list[dict[str, Any]] = []
     palette: dict[int, int] = {}
     print('Generating ASCII art...')
-    for idx, frame in enumerate(frames):
-        print_progress_bar(idx + 1, len(frames))
+    for idx, frames in enumerate(frames_list):
+        print_progress_bar(idx + 1, len(frames_list))
         entry: dict[str, Any] = convert_to_ascii(
-            palette, frame, idx, fps, args.rows, args.submsoffset
+            palette, frames, idx, fps, args.rows, args.submsoffset
         )
         if (
             entries

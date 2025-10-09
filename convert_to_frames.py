@@ -29,12 +29,12 @@ def print_progress_bar(iteration: int, total: int) -> None:
 # pylint: disable-next=R0914
 def convert_to_frames(
     vidfile: str, startms: int, rows: int
-) -> tuple[list[Image.Image], float]:
+) -> tuple[list[list[Image.Image]], float]:
     """
     Extract frames from an mp4 file starting at a given offset.
     Returns a list of PIL Images and ms per frame.
     """
-    frames: list[Image.Image] = []
+    frames_list: list[list[Image.Image]] = []
     cam: VideoCapture = VideoCapture(vidfile)
     fps: float = cam.get(CAP_PROP_FPS)
 
@@ -45,8 +45,6 @@ def convert_to_frames(
     )
 
     print('Extracting Frames...')
-    frame_num: int = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
-    print_progress_bar(frame_num, total_frames)
     ret, frame = cam.read()
     img: Image.Image = Image.fromarray(cvtColor(frame, COLOR_BGR2RGB))
 
@@ -60,17 +58,20 @@ def convert_to_frames(
         + len("</p>\n")
     ) / _TARGET_SIZE)
 
+    frames: list[Image.Image] = []
     while ret:
+        frames.append(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
+        frame_num: int = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
         if not frame_num % step:
-            frames.append(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
+            frames_list.append(frames)
+            frames = []
 
-        frame_num = int(cam.get(CAP_PROP_POS_FRAMES)) - pos_after_offset
         print_progress_bar(frame_num, total_frames)
         ret, frame = cam.read()
 
     print()
     cam.release()
     if total_frames > 1:
-        return frames, fps / step
+        return frames_list, fps / step
 
-    return frames, 1 / 5
+    return frames_list, 1 / 5

@@ -16,6 +16,12 @@ if TYPE_CHECKING:
     _Color = NDArray
 
 
+def _blend_frames(frames: list[Image.Image]) -> Image.Image:
+    weights: NDArray = 1 / np.arange(len(frames), 0, -1)
+    arr: NDArray = np.average(np.array(frames), 0, weights).astype(np.uint8)
+    return Image.fromarray(arr)
+
+
 def _get_dev(x: NDArray) -> float:
     n: int = len(x)
     mid: int = n // 2
@@ -95,7 +101,7 @@ def _convert_img_to_ascii(
 # pylint: disable-next=R0913, R0917
 def convert_to_ascii(
     palette: dict[int, int],
-    frame: Image.Image,
+    frames: list[Image.Image],
     frame_num: int,
     fps: float,
     rows: int,
@@ -104,6 +110,7 @@ def convert_to_ascii(
     """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
     start: float = 1000 * frame_num / fps + submsoffset
     duration: float = 1000 / fps
+    frame: Image.Image = _blend_frames(frames)
     palette_id, ascii_img = _convert_img_to_ascii(palette, frame, rows)
     return {
         "start": start,
