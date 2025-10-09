@@ -43,6 +43,15 @@ def _main() -> None:
         sys.exit(1)
 
     frames, fps = convert_to_frames(args.file, args.msoffset, args.rows)
+    meta_subtitles: list[str] = []
+    if args.subfile is not None:
+        with open(args.subfile, "r", encoding="utf-8") as f:
+            for sub in SubRipFile.stream(f):
+                if sub.text.strip():
+                    meta_subtitles.extend(
+                        split_subtitle(sub, fps, args.submsoffset)
+                    )
+
     entries: list[dict[str, Any]] = []
     palette: dict[int, int] = {}
     print('Generating ASCII art...')
@@ -59,15 +68,6 @@ def _main() -> None:
             entries[-1]['duration'] += entry['duration']
         else:
             entries.append(entry)
-
-    meta_subtitles: list[str] = []
-    if args.subfile is not None:
-        with open(args.subfile, "r", encoding="utf-8") as f:
-            for sub in SubRipFile.stream(f):
-                if sub.text.strip():
-                    meta_subtitles.extend(
-                        split_subtitle(sub, fps, args.submsoffset)
-                    )
 
     print()
     makedirs("output", exist_ok=True)
