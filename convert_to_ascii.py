@@ -15,9 +15,11 @@ from convert_to_frames import CHAR_ASPECT_RATIO
 if TYPE_CHECKING:
     _Color = NDArray
 
+_DECAY: float = 0.5 ** (1 / 2)
+
 
 def _blend_frames(frames: list[Image.Image]) -> Image.Image:
-    weights: NDArray = 1 / np.arange(len(frames), 0, -1)
+    weights: NDArray = _DECAY ** np.arange(len(frames), 0, -1)
     arr: NDArray = np.average(np.array(frames), 0, weights).astype(np.uint8)
     return Image.fromarray(arr)
 
