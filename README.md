@@ -19,7 +19,7 @@ $ pip install -r requirements.txt
 ## Example
 
 ```shell
-$ python main.py "Bad Apple.mp4" "Bad Apple.srt" 12
+$ python main.py "Bad Apple.mp4" 12 --subfile "Bad Apple.srt"
 ```
 
 ## What do The Arguments mean
