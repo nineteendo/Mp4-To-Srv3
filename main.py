@@ -16,7 +16,7 @@ from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
 from split_subtitle import split_subtitle
 
-_OUTPUT_PATH: str = "output/subtitles.srv3"
+_OUTPUT_DIR: str = "output"
 
 
 def _parse_args() -> Namespace:
@@ -34,6 +34,22 @@ def _parse_args() -> Namespace:
     parser.add_argument('file', help="Path to the mp4 file.")
     parser.add_argument('rows', type=int, help="Number of ASCII rows.")
     return parser.parse_args()
+
+
+def _get_text_styles(rows: int, palette: dict[int, int]) -> list[str]:
+    return [
+        f'<pen id={palette_id} bo=0 of={2 if rows > 30 else 1} '
+        f'fc="#{color_id:03x}" ec="#{color_id:03x}">'
+        for color_id, palette_id in palette.items()
+    ]
+
+
+def _get_subtitles(entries: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
+        f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
+        for entry in entries
+    ]
 
 
 def _main() -> None:
@@ -69,12 +85,7 @@ def _main() -> None:
         else:
             entries.append(entry)
 
-    text_styles: list[str] = [
-        f'<pen id={palette_id} bo=0 of={2 if args.rows > 30 else 1} '
-        f'fc="#{color_id:03x}" ec="#{color_id:03x}">'
-        for color_id, palette_id in palette.items()
-    ]
-    if args.rows > 48:
+    if portrait := args.rows > 48:
         window_style: str = '<ws id=0 pd=3 sd=0>'
         window_positions: list[str] = [
             '<wp id=0 ap=4 ah=50 av=50>',
@@ -87,22 +98,28 @@ def _main() -> None:
             '<wp id=1 ap=7 ah=50 av=100>'
         ]
 
-    subtitles: list[str] = [
-        f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
-        f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
-        for entry in entries
-    ]
     print()
-    makedirs("output", exist_ok=True)
-    with open(_OUTPUT_PATH, "w", encoding="utf-8") as fp:
+    makedirs(_OUTPUT_DIR, exist_ok=True)
+    output_filename: str = (
+        f"{_OUTPUT_DIR}/"
+        + f"{4 * args.rows}p"
+        + (f"{fps:.2g}" if round(fps) != 30 else "")
+        + (" (portrait)" if portrait else "")
+        + ".srv3"
+    )
+    with open(output_filename, "w", encoding="utf-8") as fp:
         fp.write("\n".join([
             '<timedtext format="3">',
-            '<head>', *text_styles, window_style, *window_positions, '</head>',
-            '<body>', *subtitles, *meta_subtitles, '</body>',
+            '<head>',
+            *_get_text_styles(args.rows, palette),
+            window_style,
+            *window_positions,
+            '</head>',
+            '<body>', *_get_subtitles(entries), *meta_subtitles, '</body>',
             '</timedtext>',
         ]))
 
-    print(f"Subtitles written to {_OUTPUT_PATH}")
+    print(f"Subtitles written to {output_filename}")
 
 
 if __name__ == "__main__":
