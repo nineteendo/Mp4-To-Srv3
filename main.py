@@ -63,10 +63,9 @@ def _main() -> None:
     if args.subfile is not None:
         with open(args.subfile, "r", encoding="utf-8") as fp:
             for sub in SubRipFile.stream(fp):
-                if sub.text.strip():
-                    meta_subtitles.extend(
-                        split_subtitle(sub, fps, args.submsoffset)
-                    )
+                meta_subtitles.extend(
+                    split_subtitle(sub, fps, args.submsoffset)
+                )
 
     entries: list[dict[str, Any]] = []
     palette: dict[int, int] = {}
