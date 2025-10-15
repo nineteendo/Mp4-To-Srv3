@@ -45,8 +45,8 @@ def _main() -> None:
     frames_list, fps = convert_to_frames(args.file, args.msoffset, args.rows)
     meta_subtitles: list[str] = []
     if args.subfile is not None:
-        with open(args.subfile, "r", encoding="utf-8") as f:
-            for sub in SubRipFile.stream(f):
+        with open(args.subfile, "r", encoding="utf-8") as fp:
+            for sub in SubRipFile.stream(fp):
                 if sub.text.strip():
                     meta_subtitles.extend(
                         split_subtitle(sub, fps, args.submsoffset)
@@ -69,38 +69,38 @@ def _main() -> None:
         else:
             entries.append(entry)
 
+    text_styles: list[str] = [
+        f'<pen id={palette_id} bo=0 of={2 if args.rows > 30 else 1} '
+        f'fc="#{color_id:03x}" ec="#{color_id:03x}">'
+        for color_id, palette_id in palette.items()
+    ]
+    if args.rows > 48:
+        window_style: str = '<ws id=0 pd=3 sd=0>'
+        window_positions: list[str] = [
+            '<wp id=0 ap=4 ah=50 av=50>',
+            '<wp id=1 ap=5 ah=100 av=50>'
+        ]
+    else:
+        window_style = '<ws id=0 pd=0 sd=0>'
+        window_positions = [
+            '<wp id=0 ap=4 ah=50 av=50>',
+            '<wp id=1 ap=7 ah=50 av=100>'
+        ]
+
+    subtitles: list[str] = [
+        f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
+        f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
+        for entry in entries
+    ]
     print()
     makedirs("output", exist_ok=True)
-    with open(_OUTPUT_PATH, "w", encoding="utf-8") as f:
-        f.write('<timedtext format="3">\n')
-        f.write('<head>\n')
-        for color_id, palette_id in palette.items():
-            offset: int = 2 if args.rows > 30 else 1
-            f.write(
-                f'<pen id={palette_id} bo=0 of={offset} fc="#{color_id:03x}" '
-                f'ec="#{color_id:03x}">\n'
-            )
-
-        if args.rows > 48:
-            f.write('<ws id=0 pd=3 sd=0>\n')
-            f.write('<wp id=0 ap=4 ah=50 av=50>\n')
-            f.write('<wp id=1 ap=5 ah=100 av=50>\n')
-        else:
-            f.write('<ws id=0 pd=0 sd=0>\n')
-            f.write('<wp id=0 ap=4 ah=50 av=50>\n')
-            f.write('<wp id=1 ap=7 ah=50 av=100>\n')
-
-        f.write('</head>\n')
-        f.write('<body>\n')
-        for entry in entries:
-            f.write(
-                f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
-                f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>\n"
-            )
-
-        f.writelines(meta_subtitles)
-        f.write('</body>\n')
-        f.write('</timedtext>')
+    with open(_OUTPUT_PATH, "w", encoding="utf-8") as fp:
+        fp.write("\n".join([
+            '<timedtext format="3">',
+            '<head>', *text_styles, window_style, *window_positions, '</head>',
+            '<body>', *subtitles, *meta_subtitles, '</body>',
+            '</timedtext>',
+        ]))
 
     print(f"Subtitles written to {_OUTPUT_PATH}")
 

@@ -12,7 +12,7 @@ def _append_subtitle(
     subtitles: list[str], start: float, duration: float, text: str
 ) -> None:
     subtitles.append(
-        f"<p t={ceil(start)} d={floor(duration)} wp=1 ws=0>{text}</p>\n"
+        f"<p t={ceil(start)} d={floor(duration)} wp=1 ws=0>{text}</p>"
     )
 
 
