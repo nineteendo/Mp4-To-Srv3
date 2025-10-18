@@ -16,6 +16,7 @@ from convert_to_ascii import convert_to_ascii
 from convert_to_frames import convert_to_frames, print_progress_bar
 from split_subtitle import split_subtitle
 
+_ENCODINGS: list[str] = ["utf-8", "utf-16"]
 _OUTPUT_DIR: str = "output"
 
 
@@ -50,6 +51,10 @@ def _get_subtitles(entries: list[dict[str, Any]]) -> list[str]:
         f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
         for entry in entries
     ]
+
+
+def _encode_smallest(text: str) -> bytes:
+    return min((text.encode(encoding) for encoding in _ENCODINGS), key=len)
 
 
 def _main() -> None:
@@ -106,8 +111,8 @@ def _main() -> None:
         + (" (portrait)" if portrait else "")
         + ".srv3"
     )
-    with open(output_filename, "w", encoding="utf-8") as fp:
-        fp.write("\n".join([
+    with open(output_filename, "wb") as fp:
+        fp.write(_encode_smallest("\n".join([
             '<timedtext format="3">',
             '<head>',
             *_get_text_styles(args.rows, palette),
@@ -116,7 +121,7 @@ def _main() -> None:
             '</head>',
             '<body>', *_get_subtitles(entries), *meta_subtitles, '</body>',
             '</timedtext>',
-        ]))
+        ])))
 
     print(f"Subtitles written to {output_filename}")
 
