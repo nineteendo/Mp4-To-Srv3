@@ -1,11 +1,11 @@
-"""Split up subtitle."""
+"""Convert subtitles to meta subtitles."""
 from __future__ import annotations
 
-__all__: list[str] = ["split_subtitle"]
+__all__: list[str] = ["convert_to_meta_subtitles"]
 
 from math import ceil, floor
 
-from pysrt import SubRipItem  # type: ignore
+from pysrt import SubRipFile, SubRipItem  # type: ignore
 
 
 def _append_subtitle(
@@ -16,8 +16,9 @@ def _append_subtitle(
     )
 
 
-def split_subtitle(sub: SubRipItem, fps: float, submsoffset: int) -> list[str]:
-    """Split up subtitle."""
+def _split_subtitle(
+    sub: SubRipItem, fps: float, submsoffset: int
+) -> list[str]:
     frame_duration: float = 1000 / fps
     subtitles: list[str] = []
     start: float = sub.start.ordinal
@@ -34,3 +35,13 @@ def split_subtitle(sub: SubRipItem, fps: float, submsoffset: int) -> list[str]:
         _append_subtitle(subtitles, start, end - start, sub.text)
 
     return subtitles
+
+
+def convert_to_meta_subtitles(subfile: str, fps: float, submsoffset: int):
+    """Convert subtitles to meta subtitles."""
+    meta_subtitles: list[str] = []
+    with open(subfile, "r", encoding="utf-8") as fp:
+        for sub in SubRipFile.stream(fp):
+            meta_subtitles.extend(_split_subtitle(sub, fps, submsoffset))
+
+    return meta_subtitles

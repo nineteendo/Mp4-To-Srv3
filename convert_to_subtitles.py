@@ -1,16 +1,16 @@
 """Convert an image to ASCII art."""
 from __future__ import annotations
 
-__all__: list[str] = ["convert_to_ascii"]
+__all__: list[str] = ["convert_to_subtitles"]
 
 from typing import TYPE_CHECKING, Any
-from math import inf
+from math import ceil, floor, inf
 
 import numpy as np
 from numpy.typing import NDArray
 from PIL import Image
 
-from convert_to_frames import CHAR_ASPECT_RATIO
+from convert_to_frames import CHAR_ASPECT_RATIO, print_progress_bar
 
 if TYPE_CHECKING:
     _Color = NDArray
@@ -101,15 +101,14 @@ def _convert_img_to_ascii(
 
 
 # pylint: disable-next=R0913, R0917
-def convert_to_ascii(
+def _convert_to_subtitle_entry(
     palette: dict[int, int],
     frames: list[Image.Image],
     frame_num: int,
     fps: float,
-    rows: int,
     submsoffset: int,
+    rows: int,
 ) -> dict[str, Any]:
-    """Convert a video frame to an SRV3 subtitle entry with ASCII art."""
     start: float = 1000 * frame_num / fps + submsoffset
     duration: float = 1000 / fps
     frame: Image.Image = _blend_frames(frames)
@@ -120,3 +119,35 @@ def convert_to_ascii(
         "palette_id": palette_id,
         "ascii_img": ascii_img
     }
+
+
+def convert_to_subtitles(
+    frames_list: list[list[Image.Image]],
+    fps: float,
+    submsoffset: int,
+    rows: int,
+) -> tuple[list[str], dict[int, int]]:
+    """Convert video frames list to SRV3 subtitles with ASCII art."""
+    print('Generating ASCII art...')
+    palette: dict[int, int] = {}
+    entries: list[dict[str, Any]] = []
+    for idx, frames in enumerate(frames_list):
+        entry: dict[str, Any] = _convert_to_subtitle_entry(
+            palette, frames, idx, fps, submsoffset, rows,
+        )
+        print_progress_bar(idx + 1, len(frames_list))
+        if (
+            entries
+            and entry['palette_id'] == entries[-1]['palette_id']
+            and entry['ascii_img'] == entries[-1]['ascii_img']
+        ):
+            entries[-1]['duration'] += entry['duration']
+        else:
+            entries.append(entry)
+
+    subtitles: list[str] = [
+        f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
+        f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
+        for entry in entries
+    ]
+    return subtitles, palette

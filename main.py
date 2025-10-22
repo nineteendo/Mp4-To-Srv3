@@ -5,16 +5,12 @@ __all__: list[str] = []
 
 import sys
 from argparse import ArgumentParser, Namespace
-from math import ceil, floor
 from os import makedirs
 from os.path import exists
-from typing import Any
 
-from pysrt import SubRipFile  # type: ignore
-
-from convert_to_ascii import convert_to_ascii
-from convert_to_frames import convert_to_frames, print_progress_bar
-from split_subtitle import split_subtitle
+from convert_to_subtitles import convert_to_subtitles
+from convert_to_frames import convert_to_frames
+from convert_to_meta_subtitles import convert_to_meta_subtitles
 
 _OUTPUT_DIR: str = "output"
 
@@ -44,14 +40,6 @@ def _get_text_styles(rows: int, palette: dict[int, int]) -> list[str]:
     ]
 
 
-def _get_subtitles(entries: list[dict[str, Any]]) -> list[str]:
-    return [
-        f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
-        f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
-        for entry in entries
-    ]
-
-
 def _main() -> None:
     args: Namespace = _parse_args()
     if not exists(args.file):
@@ -59,31 +47,16 @@ def _main() -> None:
         sys.exit(1)
 
     frames_list, fps = convert_to_frames(args.file, args.msoffset, args.rows)
-    meta_subtitles: list[str] = []
-    if args.subfile is not None:
-        with open(args.subfile, "r", encoding="utf-8") as fp:
-            for sub in SubRipFile.stream(fp):
-                meta_subtitles.extend(
-                    split_subtitle(sub, fps, args.submsoffset)
-                )
-
-    entries: list[dict[str, Any]] = []
-    palette: dict[int, int] = {}
-    print('Generating ASCII art...')
-    for idx, frames in enumerate(frames_list):
-        print_progress_bar(idx + 1, len(frames_list))
-        entry: dict[str, Any] = convert_to_ascii(
-            palette, frames, idx, fps, args.rows, args.submsoffset
+    if args.subfile is None:
+        meta_subtitles: list[str] = []
+    else:
+        meta_subtitles = convert_to_meta_subtitles(
+            args.subfile, fps, args.submsoffset
         )
-        if (
-            entries
-            and entry['palette_id'] == entries[-1]['palette_id']
-            and entry['ascii_img'] == entries[-1]['ascii_img']
-        ):
-            entries[-1]['duration'] += entry['duration']
-        else:
-            entries.append(entry)
 
+    subtitles, palette = convert_to_subtitles(
+        frames_list, fps, args.submsoffset, args.rows,
+    )
     if portrait := args.rows > 48:
         window_style: str = '<ws id=0 pd=3 sd=0>'
         window_positions: list[str] = [
@@ -114,7 +87,7 @@ def _main() -> None:
             window_style,
             *window_positions,
             '</head>',
-            '<body>', *_get_subtitles(entries), *meta_subtitles, '</body>',
+            '<body>', *subtitles, *meta_subtitles, '</body>',
             '</timedtext>',
         ]))
 
