@@ -59,12 +59,12 @@ def _color2id(color: _Color) -> int:
 def _get_colored_char(sub_arr: NDArray) -> tuple[int, str]:
     colors: NDArray = sub_arr.reshape(-1, 3)
     idxs: NDArray = _get_best_idxs(colors)
-    color_id: int = _color2id(colors[idxs].mean(0)) if len(idxs) else 0
+    avg_color: NDArray = colors[idxs].mean(0)
     value: int = 0x2800
     for idx in idxs:
         value |= 1 << idx
 
-    return color_id, chr(value)
+    return _color2id(avg_color), chr(value)
 
 
 # pylint: disable-next=R0914
