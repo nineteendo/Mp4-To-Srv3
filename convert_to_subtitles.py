@@ -16,6 +16,12 @@ if TYPE_CHECKING:
     _Color = NDArray
 
 _DECAY: float = 0.5 ** (1 / 2)
+_DOT_POSITIONS: NDArray = np.array([
+    1 << 0, 1 << 3,
+    1 << 1, 1 << 4,
+    1 << 2, 1 << 5,
+    1 << 6, 1 << 7
+])
 
 
 def _blend_frames(frames: list[Image.Image]) -> Image.Image:
@@ -62,7 +68,7 @@ def _get_colored_char(sub_arr: NDArray) -> tuple[int, str]:
     avg_color: NDArray = colors[idxs].mean(0)
     value: int = 0x2800
     for idx in idxs:
-        value |= 1 << idx
+        value |= _DOT_POSITIONS[idx]
 
     return _color2id(avg_color), chr(value)
 
