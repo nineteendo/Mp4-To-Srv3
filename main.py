@@ -74,7 +74,7 @@ def _main() -> None:
     makedirs(_OUTPUT_DIR, exist_ok=True)
     output_filename: str = (
         f"{_OUTPUT_DIR}/"
-        + f"{4 * args.rows}p"
+        + f"{args.rows}p"
         + (f"{fps:.2g}" if round(fps) != 30 else "")
         + (" (portrait)" if portrait else "")
         + ".srv3"
