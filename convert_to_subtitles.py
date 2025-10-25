@@ -26,30 +26,30 @@ _DOT_POSITIONS: NDArray = np.array([
 
 def _blend_frames(frames: list[Image.Image]) -> Image.Image:
     weights: NDArray = _DECAY ** np.arange(len(frames), 0, -1)
-    arr: NDArray = np.average(np.array(frames), 0, weights).astype(np.uint8)
-    return Image.fromarray(arr)
+    arr: NDArray = np.average(np.array(frames), 0, weights)
+    return Image.fromarray(arr.round().astype(np.uint8))
 
 
 def _get_dev(x: NDArray) -> float:
     n: int = len(x)
     mid: int = n // 2
     med: float = x[mid] if n % 2 else (x[mid - 1] + x[mid]) / 2
-    return abs(x - med).sum()
+    return np.abs(x - med).sum()
 
 
 def _get_best_idxs(colors: NDArray) -> NDArray:
-    brightnesses: NDArray = np.dot(colors, [0.299, 0.587, 0.114])
+    brightnesses: NDArray = colors.dot([0.299, 0.587, 0.114])
     all_idxs: NDArray = brightnesses.argsort()
-    sorted_brightnesses: NDArray = brightnesses[all_idxs]
+    brightnesses = brightnesses[all_idxs]
     rem_dev: float = 0
     best_dev: float = inf
     best_k: int = 0
     for k in range(8):
-        if (dev := _get_dev(sorted_brightnesses[k:]) + rem_dev) < best_dev:
+        if (dev := _get_dev(brightnesses[k:]) + rem_dev) < best_dev:
             best_dev = dev
             best_k = k
 
-        rem_dev += sorted_brightnesses[k]
+        rem_dev += brightnesses[k]
 
     return all_idxs[best_k:]
 
