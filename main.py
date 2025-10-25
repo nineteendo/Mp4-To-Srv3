@@ -5,12 +5,13 @@ __all__: list[str] = []
 
 import sys
 from argparse import ArgumentParser, Namespace
+from math import sqrt
 from os import makedirs
 from os.path import exists
 
-from convert_to_subtitles import convert_to_subtitles
 from convert_to_frames import convert_to_frames
 from convert_to_meta_subtitles import convert_to_meta_subtitles
+from convert_to_subtitles import convert_to_subtitles
 
 _OUTPUT_DIR: str = "output"
 
@@ -18,6 +19,9 @@ _OUTPUT_DIR: str = "output"
 def _parse_args() -> Namespace:
     parser: ArgumentParser = ArgumentParser(
         description="Convert mp4 to srv3 subtitles using ASCII art."
+    )
+    parser.add_argument(
+        '--layers', type=int, default=1, help="Number of stacked frames."
     )
     parser.add_argument(
         '--msoffset', type=int, default=0, help="Milliseconds offset."
@@ -46,7 +50,9 @@ def _main() -> None:
         print(f"File not found: {args.file}")
         sys.exit(1)
 
-    frames_list, fps = convert_to_frames(args.file, args.msoffset, args.rows)
+    frames_list, fps = convert_to_frames(
+        args.file, args.msoffset, args.rows, args.layers
+    )
     if args.subfile is None:
         meta_subtitles: list[str] = []
     else:
@@ -55,7 +61,7 @@ def _main() -> None:
         )
 
     subtitles, palette = convert_to_subtitles(
-        frames_list, fps, args.submsoffset, args.rows,
+        frames_list, fps, args.submsoffset, args.rows, args.layers
     )
     if portrait := args.rows > 48:
         window_style: str = '<ws id=0 pd=3 sd=0>'
@@ -70,11 +76,10 @@ def _main() -> None:
             '<wp id=1 ap=7 ah=50 av=100>'
         ]
 
-    print()
     makedirs(_OUTPUT_DIR, exist_ok=True)
     output_filename: str = (
         f"{_OUTPUT_DIR}/"
-        + f"{args.rows}p"
+        + f"{args.rows * sqrt(args.layers):.0f}p"
         + (f"{fps:.2g}" if round(fps) != 30 else "")
         + (" (portrait)" if portrait else "")
         + ".srv3"

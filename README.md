@@ -19,13 +19,14 @@ $ pip install -r requirements.txt
 ## Example
 
 ```shell
-$ python main.py "Bad Apple.mp4" 12 --subfile "Bad Apple.srt"
+$ python main.py "Bad Apple.mp4" 12 --layers 1 --subfile "Bad Apple.srt"
 ```
 
 ## What do The Arguments mean
 
 | Argument        | Required | Description                                            |
 |-----------------|----------|--------------------------------------------------------|
+| `--layers`      | No       | How many frames to stack                               |
 | `--msoffset`    | No       | After how many milliseconds should the animation start |
 | `--subfile`     | No       | Your input subtitle file                               |
 | `--submsoffset` | No       | At which milisecond the subtitles start                |

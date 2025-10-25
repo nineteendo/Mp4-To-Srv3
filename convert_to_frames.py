@@ -28,7 +28,7 @@ def print_progress_bar(iteration: int, total: int) -> None:
 
 # pylint: disable-next=R0914
 def convert_to_frames(
-    vidfile: str, startms: int, rows: int
+    vidfile: str, startms: int, rows: int, layers: int
 ) -> tuple[list[list[Image.Image]], float]:
     """
     Extract frames from an mp4 file starting at a given offset.
@@ -49,7 +49,7 @@ def convert_to_frames(
     img: Image.Image = Image.fromarray(cvtColor(frame, COLOR_BGR2RGB))
 
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
-    step: int = ceil(total_frames * (
+    step: int = ceil(total_frames * layers * (
         len(
             f"<p t={ceil(1000 * (total_frames - 1) / fps)} "
             f"d={floor(1000 / fps)} wp=0 ws=0>"

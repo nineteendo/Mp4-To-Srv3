@@ -37,19 +37,19 @@ def _get_dev(x: NDArray) -> float:
     return np.abs(x - med).sum()
 
 
-def _get_best_idxs(colors: NDArray) -> NDArray:
+def _get_best_idxs(colors: NDArray, layer_mask: slice) -> NDArray:
     brightnesses: NDArray = colors.dot([0.299, 0.587, 0.114])
-    all_idxs: NDArray = brightnesses.argsort()
+    all_idxs: NDArray = brightnesses.argsort()[layer_mask]
     brightnesses = brightnesses[all_idxs]
     rem_dev: float = 0
     best_dev: float = inf
     best_k: int = 0
-    for k in range(8):
+    for k, brightness in enumerate(brightnesses):
         if (dev := _get_dev(brightnesses[k:]) + rem_dev) < best_dev:
             best_dev = dev
             best_k = k
 
-        rem_dev += brightnesses[k]
+        rem_dev += brightness
 
     return all_idxs[best_k:]
 
@@ -62,9 +62,9 @@ def _color2id(color: _Color) -> int:
     return 256 * r + 16 * g + b
 
 
-def _get_colored_char(sub_arr: NDArray) -> tuple[int, str]:
+def _get_colored_char(sub_arr: NDArray, layer_mask: slice) -> tuple[int, str]:
     colors: NDArray = sub_arr.reshape(-1, 3)
-    idxs: NDArray = _get_best_idxs(colors)
+    idxs: NDArray = _get_best_idxs(colors, layer_mask)
     avg_color: NDArray = colors[idxs].mean(0)
     value: int = 0x2800
     for idx in idxs:
@@ -75,7 +75,7 @@ def _get_colored_char(sub_arr: NDArray) -> tuple[int, str]:
 
 # pylint: disable-next=R0914
 def _convert_img_to_ascii(
-    palette: dict[int, int], img: Image.Image, rows: int
+    palette: dict[int, int], img: Image.Image, rows: int, layer_mask: slice
 ) -> tuple[int, str]:
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     img = img.resize((2 * cols, 4 * rows), Image.Resampling.LANCZOS)
@@ -88,8 +88,8 @@ def _convert_img_to_ascii(
             ascii_img.append('\n')
 
         for i in range(cols):
-            sub_arr: NDArray = arr[4 * j:4 * j + 4, 2 * i:2 * i + 2]
-            color_id, char = _get_colored_char(sub_arr)
+            sub_arr: NDArray = arr[4 * j: 4 * j + 4, 2 * i: 2 * i + 2]
+            color_id, char = _get_colored_char(sub_arr, layer_mask)
             if color_id != prev_color_id:
                 palette_id: int = palette.setdefault(color_id, len(palette))
                 if first_palette_id == -1:
@@ -114,11 +114,14 @@ def _convert_to_subtitle_entry(
     fps: float,
     submsoffset: int,
     rows: int,
+    layer_mask: slice,
 ) -> dict[str, Any]:
     start: float = 1000 * frame_num / fps + submsoffset
     duration: float = 1000 / fps
     frame: Image.Image = _blend_frames(frames)
-    palette_id, ascii_img = _convert_img_to_ascii(palette, frame, rows)
+    palette_id, ascii_img = _convert_img_to_ascii(
+        palette, frame, rows, layer_mask
+    )
     return {
         "start": start,
         "duration": duration,
@@ -132,28 +135,39 @@ def convert_to_subtitles(
     fps: float,
     submsoffset: int,
     rows: int,
+    layers: int
 ) -> tuple[list[str], dict[int, int]]:
     """Convert video frames list to SRV3 subtitles with ASCII art."""
     print('Generating ASCII art...')
     palette: dict[int, int] = {}
-    entries: list[dict[str, Any]] = []
-    for idx, frames in enumerate(frames_list):
-        entry: dict[str, Any] = _convert_to_subtitle_entry(
-            palette, frames, idx, fps, submsoffset, rows,
+    subtitles: list[str] = []
+    iteration: int = 0
+    layer_step: float = 8 / layers
+    for layer_idx in range(layers):
+        layer_mask: slice = slice(
+            round(layer_step * layer_idx), round(layer_step * (layer_idx + 1))
         )
-        print_progress_bar(idx + 1, len(frames_list))
-        if (
-            entries
-            and entry['palette_id'] == entries[-1]['palette_id']
-            and entry['ascii_img'] == entries[-1]['ascii_img']
-        ):
-            entries[-1]['duration'] += entry['duration']
-        else:
-            entries.append(entry)
+        entries: list[dict[str, Any]] = []
+        for idx, frames in enumerate(frames_list):
+            entry: dict[str, Any] = _convert_to_subtitle_entry(
+                palette, frames, idx, fps, submsoffset, rows, layer_mask
+            )
+            iteration += 1
+            print_progress_bar(iteration, len(frames_list) * layers)
+            if (
+                entries
+                and entry['palette_id'] == entries[-1]['palette_id']
+                and entry['ascii_img'] == entries[-1]['ascii_img']
+            ):
+                entries[-1]['duration'] += entry['duration']
+            else:
+                entries.append(entry)
 
-    subtitles: list[str] = [
-        f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
-        f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
-        for entry in entries
-    ]
+        subtitles.extend([
+            f"<p t={ceil(entry['start'])} d={floor(entry['duration'])} "
+            f"wp=0 ws=0 p={entry['palette_id']}>{entry['ascii_img']}</p>"
+            for entry in entries
+        ])
+
+    print()
     return subtitles, palette
