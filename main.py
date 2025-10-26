@@ -79,7 +79,7 @@ def _main() -> None:
     makedirs(_OUTPUT_DIR, exist_ok=True)
     output_filename: str = (
         f"{_OUTPUT_DIR}/"
-        + f"{args.rows * sqrt(args.layers):.0f}p"
+        + f"{args.rows * (sqrt(args.layers) if len(palette) > 16 else 4):.0f}p"
         + (f"{fps:.2g}" if round(fps) != 30 else "")
         + (" (portrait)" if portrait else "")
         + ".srv3"
