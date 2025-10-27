@@ -37,21 +37,30 @@ def _get_dev(x: NDArray) -> float:
     return np.abs(x - med).sum()
 
 
-def _get_best_idxs(colors: NDArray, layer_mask: slice) -> NDArray:
-    brightnesses: NDArray = colors.dot([0.299, 0.587, 0.114])
-    all_idxs: NDArray = brightnesses.argsort()[layer_mask]
-    brightnesses = brightnesses[all_idxs]
-    rem_dev: float = 0
-    best_dev: float = inf
+def _get_best_idxs_list(colors: NDArray, layers: int) -> list[NDArray]:
+    all_brightnesses: NDArray = colors.dot([0.299, 0.587, 0.114])
+    all_idxs: NDArray = all_brightnesses.argsort()
     best_k: int = 0
-    for k, brightness in enumerate(brightnesses):
-        if (dev := _get_dev(brightnesses[k:]) + rem_dev) < best_dev:
-            best_dev = dev
-            best_k = k
+    best_idxs_list: list[NDArray] = []
+    layer_step: float = 8 / layers
+    for layer_idx in range(layers)[::-1]:
+        idxs: NDArray = all_idxs[
+            round(layer_step * layer_idx):
+            round(layer_step * (layer_idx + 1)) + best_k
+        ]
+        brightnesses = all_brightnesses[idxs]
+        rem_dev: float = 0
+        best_dev: float = inf
+        for k, brightness in enumerate(brightnesses):
+            if (dev := _get_dev(brightnesses[k:]) + rem_dev) < best_dev:
+                best_dev = dev
+                best_k = k
 
-        rem_dev += brightness
+            rem_dev += brightness
 
-    return all_idxs[best_k:]
+        best_idxs_list.append(idxs[best_k:])
+
+    return best_idxs_list
 
 
 def _color2id(color: _Color) -> int:
@@ -62,9 +71,11 @@ def _color2id(color: _Color) -> int:
     return 256 * r + 16 * g + b
 
 
-def _get_colored_char(sub_arr: NDArray, layer_mask: slice) -> tuple[int, str]:
+def _get_colored_char(
+    sub_arr: NDArray, layers: int, layer_idx: int
+) -> tuple[int, str]:
     colors: NDArray = sub_arr.reshape(-1, 3)
-    idxs: NDArray = _get_best_idxs(colors, layer_mask)
+    idxs: NDArray = _get_best_idxs_list(colors, layers)[layer_idx]
     avg_color: NDArray = colors[idxs].mean(0)
     value: int = 0x2800
     for idx in idxs:
@@ -75,7 +86,11 @@ def _get_colored_char(sub_arr: NDArray, layer_mask: slice) -> tuple[int, str]:
 
 # pylint: disable-next=R0914
 def _convert_img_to_ascii(
-    palette: dict[int, int], img: Image.Image, rows: int, layer_mask: slice
+    palette: dict[int, int],
+    img: Image.Image,
+    rows: int,
+    layers: int,
+    layer_idx: int
 ) -> tuple[int, str]:
     cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
     img = img.resize((2 * cols, 4 * rows), Image.Resampling.LANCZOS)
@@ -89,7 +104,7 @@ def _convert_img_to_ascii(
 
         for i in range(cols):
             sub_arr: NDArray = arr[4 * j: 4 * j + 4, 2 * i: 2 * i + 2]
-            color_id, char = _get_colored_char(sub_arr, layer_mask)
+            color_id, char = _get_colored_char(sub_arr, layers, layer_idx)
             if color_id != prev_color_id:
                 palette_id: int = palette.setdefault(color_id, len(palette))
                 if first_palette_id == -1:
@@ -114,13 +129,14 @@ def _convert_to_subtitle_entry(
     fps: float,
     submsoffset: int,
     rows: int,
-    layer_mask: slice,
+    layers: int,
+    layer_idx: int
 ) -> dict[str, Any]:
     start: float = 1000 * frame_num / fps + submsoffset
     duration: float = 1000 / fps
     frame: Image.Image = _blend_frames(frames)
     palette_id, ascii_img = _convert_img_to_ascii(
-        palette, frame, rows, layer_mask
+        palette, frame, rows, layers, layer_idx
     )
     return {
         "start": start,
@@ -142,15 +158,11 @@ def convert_to_subtitles(
     palette: dict[int, int] = {}
     subtitles: list[str] = []
     iteration: int = 0
-    layer_step: float = 8 / layers
-    for layer_idx in range(layers):
-        layer_mask: slice = slice(
-            round(layer_step * layer_idx), round(layer_step * (layer_idx + 1))
-        )
+    for layer_idx in range(layers)[::-1]:
         entries: list[dict[str, Any]] = []
         for idx, frames in enumerate(frames_list):
             entry: dict[str, Any] = _convert_to_subtitle_entry(
-                palette, frames, idx, fps, submsoffset, rows, layer_mask
+                palette, frames, idx, fps, submsoffset, rows, layers, layer_idx
             )
             iteration += 1
             print_progress_bar(iteration, len(frames_list) * layers)
