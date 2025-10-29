@@ -3,7 +3,6 @@ from __future__ import annotations
 
 __all__: list[str] = []
 
-import sys
 from argparse import ArgumentParser, Namespace
 from math import sqrt
 from os import makedirs
@@ -47,8 +46,7 @@ def _get_text_styles(rows: int, palette: dict[int, int]) -> list[str]:
 def _main() -> None:
     args: Namespace = _parse_args()
     if not exists(args.file):
-        print(f"File not found: {args.file}")
-        sys.exit(1)
+        raise SystemExit(f"File not found: {args.file}")
 
     frames_list, fps = convert_to_frames(
         args.file, args.msoffset, args.rows, args.layers
