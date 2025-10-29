@@ -13,7 +13,7 @@ A Python program that converts Mp4 files to Srv3 files
 ## Example
 
 ```shell
-$ python main.py "Bad Apple.mp4" --subfile "Bad Apple.srt" --rows 12 --layers 1 --targetsize 12
+$ python src input/video.mp4 --subfile input/captions.srt --rows 12 --layers 1 --targetsize 12
 ```
 
 ## Command line arguments
