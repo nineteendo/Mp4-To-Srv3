@@ -1,34 +1,29 @@
 # Mp4-To-Srv3
 
-A Python Programm That Converts Mp4 files to Srv3 files
+A Python program that converts Mp4 files to Srv3 files
 
-## Requirements
+## Installation
 
-python3, opencv and numpy
-
-## How to install
-
-[Python](https://www.python.org/downloads/)
-
-if you have python setup do
-
-```shell
-$ pip install -r requirements.txt
-```
+- Install Python 3: https://www.python.org/downloads
+- Install requirements:
+    ```shell
+    $ pip install -r requirements.txt
+    ```
 
 ## Example
 
 ```shell
-$ python main.py "Bad Apple.mp4" 12 --layers 1 --subfile "Bad Apple.srt"
+$ python main.py "Bad Apple.mp4" --subfile "Bad Apple.srt" --rows 12 --layers 1 --targetsize 12
 ```
 
-## What do The Arguments mean
+## Command line arguments
 
-| Argument        | Required | Description                                            |
-|-----------------|----------|--------------------------------------------------------|
-| `--layers`      | No       | How many frames to stack                               |
-| `--msoffset`    | No       | After how many milliseconds should the animation start |
-| `--subfile`     | No       | Your input subtitle file                               |
-| `--submsoffset` | No       | At which milisecond the subtitles start                |
-| `file`          | Yes      | Your input mp4 file                                    |
-| `rows`          | Yes      | How many characters Per Column                         |
+| Argument        | Required         | Description                       |
+|-----------------|------------------|-----------------------------------|
+| `file`          | Yes              | Input mp4/png file                |
+| `--subfile`     | No               | Input srt file                    |
+| `--msoffset`    | No (default: 0)  | Millisecond offset of input files |
+| `--submsoffset` | No (default: 0)  | Millisecond offset of output file |
+| `--rows`        | No (default: 12) | Number of characters per column   |
+| `--layers`      | No (default: 1)  | Number of stacked frames          |
+| `--targetsize`  | No (default: 12) | Target size in MB                 |

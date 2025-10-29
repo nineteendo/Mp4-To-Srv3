@@ -14,8 +14,6 @@ from cv2 import (
 )
 from PIL import Image
 
-_TARGET_SIZE: float = 1.4 * 9 * 1024 * 1024
-
 CHAR_ASPECT_RATIO: float = 35 / 58
 
 
@@ -28,7 +26,7 @@ def print_progress_bar(iteration: int, total: int) -> None:
 
 # pylint: disable-next=R0914
 def convert_to_frames(
-    vidfile: str, startms: int, rows: int, layers: int
+    vidfile: str, startms: int, rows: int, layers: int, targetsize: int
 ) -> tuple[list[list[Image.Image]], float]:
     """
     Extract frames from an mp4 file starting at a given offset.
@@ -56,7 +54,7 @@ def convert_to_frames(
         )
         + rows * len((cols * "<s p=4095>\u28ff" + "\n").encode())
         + len("</p>\n")
-    ) / _TARGET_SIZE)
+    ) / (1024 * 1024 * targetsize))
 
     frames: list[Image.Image] = []
     while ret:

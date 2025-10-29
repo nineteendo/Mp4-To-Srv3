@@ -19,19 +19,29 @@ def _parse_args() -> Namespace:
     parser: ArgumentParser = ArgumentParser(
         description="Convert mp4 to srv3 subtitles using ASCII art."
     )
+    parser.add_argument('file', help="Input mp4/png file.")
+    parser.add_argument('--subfile', help="Input srt file.")
+    parser.add_argument(
+        '--msoffset',
+        type=int,
+        default=0,
+        help="Millisecond offset of input files."
+    )
+    parser.add_argument(
+        '--submsoffset',
+        type=int,
+        default=0,
+        help="Millisecond offset of output file."
+    )
+    parser.add_argument(
+        '--rows', default=12, type=int, help="Number of characters per column."
+    )
     parser.add_argument(
         '--layers', type=int, default=1, help="Number of stacked frames."
     )
     parser.add_argument(
-        '--msoffset', type=int, default=0, help="Milliseconds offset."
+        '--targetsize', type=float, default=12, help="Target size in MB."
     )
-    parser.add_argument('--subfile', help="Path to the subtitle file.")
-    parser.add_argument(
-        '--submsoffset', type=int, default=0, help="Sub-milliseconds offset."
-    )
-
-    parser.add_argument('file', help="Path to the mp4 file.")
-    parser.add_argument('rows', type=int, help="Number of ASCII rows.")
     return parser.parse_args()
 
 
@@ -49,7 +59,7 @@ def _main() -> None:
         raise SystemExit(f"File not found: {args.file}")
 
     frames_list, fps = convert_to_frames(
-        args.file, args.msoffset, args.rows, args.layers
+        args.file, args.msoffset, args.rows, args.layers, args.targetsize
     )
     if args.subfile is None:
         meta_subtitles: list[str] = []
