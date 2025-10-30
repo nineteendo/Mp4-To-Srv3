@@ -1,18 +1,16 @@
 """Convert mp4 to srv3 subtitles using ASCII art."""
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: list[str] = ["main"]
 
 from argparse import ArgumentParser, Namespace
 from math import sqrt
 from os import makedirs
-from os.path import exists
+from os.path import exists, join
 
-from convert_to_frames import convert_to_frames
-from convert_to_meta_subtitles import convert_to_meta_subtitles
-from convert_to_subtitles import convert_to_subtitles
-
-_OUTPUT_DIR: str = "output"
+from mp4_to_srv3.convert_to_frames import convert_to_frames
+from mp4_to_srv3.convert_to_meta_subtitles import convert_to_meta_subtitles
+from mp4_to_srv3.convert_to_subtitles import convert_to_subtitles
 
 
 def _parse_args() -> Namespace:
@@ -21,6 +19,7 @@ def _parse_args() -> Namespace:
     )
     parser.add_argument('file', help="Input mp4/png file.")
     parser.add_argument('--subfile', help="Input srt file.")
+    parser.add_argument('--dir', default=".", help="Output folder.")
     parser.add_argument(
         '--msoffset',
         type=int,
@@ -53,7 +52,8 @@ def _get_text_styles(rows: int, palette: dict[int, int]) -> list[str]:
     ]
 
 
-def _main() -> None:
+def main() -> None:
+    """Convert mp4 to srv3 subtitles using ASCII art."""
     args: Namespace = _parse_args()
     if not exists(args.file):
         raise SystemExit(f"File not found: {args.file}")
@@ -84,10 +84,10 @@ def _main() -> None:
             '<wp id=1 ap=7 ah=50 av=100>'
         ]
 
-    makedirs(_OUTPUT_DIR, exist_ok=True)
-    output_filename: str = (
-        f"{_OUTPUT_DIR}/"
-        + f"{args.rows * (sqrt(args.layers) if len(palette) > 16 else 4):.0f}p"
+    makedirs(args.dir, exist_ok=True)
+    output_filename: str = join(
+        args.dir,
+        f"{args.rows * (sqrt(args.layers) if len(palette) > 16 else 4):.0f}p"
         + (f"{fps:.2g}" if round(fps) != 30 else "")
         + (" (portrait)" if portrait else "")
         + ".srv3"
@@ -108,4 +108,4 @@ def _main() -> None:
 
 
 if __name__ == "__main__":
-    _main()
+    main()

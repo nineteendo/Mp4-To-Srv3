@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 from PIL import Image
 
-from convert_to_frames import CHAR_ASPECT_RATIO, print_progress_bar
+from mp4_to_srv3.convert_to_frames import CHAR_ASPECT_RATIO, print_progress_bar
 
 if TYPE_CHECKING:
     _Color = NDArray
