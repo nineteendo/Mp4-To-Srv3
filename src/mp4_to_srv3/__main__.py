@@ -71,7 +71,7 @@ def main() -> None:
     subtitles, palette = convert_to_subtitles(
         frames_list, fps, args.submsoffset, args.rows, args.layers
     )
-    if portrait := args.rows > 48:
+    if portrait := args.rows > 60:
         window_style: str = '<ws id=0 pd=3 sd=0>'
         window_positions: list[str] = [
             '<wp id=0 ap=4 ah=50 av=50>',
