@@ -84,15 +84,22 @@ def _get_colored_char(
     return _color2id(avg_color), chr(value)
 
 
-# pylint: disable-next=R0914
+# pylint: disable-next=R0913, R0914, R0917
 def _convert_img_to_ascii(
     palette: dict[int, int],
     img: Image.Image,
+    portrait: bool,
     rows: int,
     layers: int,
     layer_idx: int
 ) -> tuple[int, str]:
-    cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
+    if portrait:
+        cols: int = round(rows / CHAR_ASPECT_RATIO)
+        rows = round(cols * CHAR_ASPECT_RATIO * img.width / img.height)
+        img = img.rotate(90, expand=True)
+    else:
+        cols = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
+
     img = img.resize((2 * cols, 4 * rows), Image.Resampling.LANCZOS)
     arr: NDArray = np.array(img)
     ascii_img: list[str] = []
@@ -128,6 +135,7 @@ def _convert_to_subtitle_entry(
     frame_num: int,
     fps: float,
     submsoffset: int,
+    portrait: bool,
     rows: int,
     layers: int,
     layer_idx: int
@@ -136,7 +144,7 @@ def _convert_to_subtitle_entry(
     duration: float = 1000 / fps
     frame: Image.Image = _blend_frames(frames)
     palette_id, ascii_img = _convert_img_to_ascii(
-        palette, frame, rows, layers, layer_idx
+        palette, frame, portrait, rows, layers, layer_idx
     )
     return {
         "start": start,
@@ -146,10 +154,12 @@ def _convert_to_subtitle_entry(
     }
 
 
+# pylint: disable-next=R0913, R0917
 def convert_to_subtitles(
     frames_list: list[list[Image.Image]],
     fps: float,
     submsoffset: int,
+    portrait: bool,
     rows: int,
     layers: int
 ) -> tuple[list[str], dict[int, int]]:
@@ -162,7 +172,8 @@ def convert_to_subtitles(
         entries: list[dict[str, Any]] = []
         for idx, frames in enumerate(frames_list):
             entry: dict[str, Any] = _convert_to_subtitle_entry(
-                palette, frames, idx, fps, submsoffset, rows, layers, layer_idx
+                palette, frames, idx, fps, submsoffset, portrait, rows, layers,
+                layer_idx
             )
             iteration += 1
             print_progress_bar(iteration, len(frames_list) * layers)

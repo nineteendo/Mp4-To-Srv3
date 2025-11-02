@@ -24,16 +24,21 @@ def print_progress_bar(iteration: int, total: int) -> None:
     print(progress, end='\r', flush=True)
 
 
-# pylint: disable-next=R0914
+# pylint: disable-next=R0913, R0914, R0917
 def convert_to_frames(
-    vidfile: str, startms: int, rows: int, layers: int, targetsize: int
+    file: str,
+    startms: int,
+    portrait: bool,
+    rows: int,
+    layers: int,
+    targetsize: int
 ) -> tuple[list[list[Image.Image]], float]:
     """
     Extract frames from an mp4 file starting at a given offset.
     Returns a list of PIL Images and ms per frame.
     """
     frames_list: list[list[Image.Image]] = []
-    cam: VideoCapture = VideoCapture(vidfile)
+    cam: VideoCapture = VideoCapture(file)
     fps: float = cam.get(CAP_PROP_FPS)
 
     cam.set(CAP_PROP_POS_MSEC, startms)
@@ -46,7 +51,12 @@ def convert_to_frames(
     ret, frame = cam.read()
     img: Image.Image = Image.fromarray(cvtColor(frame, COLOR_BGR2RGB))
 
-    cols: int = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
+    if portrait:
+        cols: int = round(rows / CHAR_ASPECT_RATIO)
+        rows = round(cols * CHAR_ASPECT_RATIO * img.width / img.height)
+    else:
+        cols = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
+
     step: int = ceil(total_frames * layers * (
         len(
             f"<p t={ceil(1000 * (total_frames - 1) / fps)} "

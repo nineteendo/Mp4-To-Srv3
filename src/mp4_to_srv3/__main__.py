@@ -58,8 +58,10 @@ def main() -> None:
     if not exists(args.file):
         raise SystemExit(f"File not found: {args.file}")
 
+    portrait: bool = args.rows > 60
     frames_list, fps = convert_to_frames(
-        args.file, args.msoffset, args.rows, args.layers, args.targetsize
+        args.file, args.msoffset, portrait, args.rows, args.layers,
+        args.targetsize
     )
     if args.subfile is None:
         meta_subtitles: list[str] = []
@@ -69,16 +71,22 @@ def main() -> None:
         )
 
     subtitles, palette = convert_to_subtitles(
-        frames_list, fps, args.submsoffset, args.rows, args.layers
+        frames_list, fps, args.submsoffset, portrait, args.rows, args.layers
     )
-    if portrait := args.rows > 60:
-        window_style: str = '<ws id=0 pd=3 sd=0>'
+    if portrait:
+        window_styles: list[str] = [
+            '<ws id=0 pd=0 sd=0>',
+            '<ws id=1 pd=3 sd=0>'
+        ]
         window_positions: list[str] = [
             '<wp id=0 ap=4 ah=50 av=50>',
             '<wp id=1 ap=5 ah=100 av=50>'
         ]
     else:
-        window_style = '<ws id=0 pd=0 sd=0>'
+        window_styles = [
+            '<ws id=0 pd=0 sd=0>',
+            '<ws id=1 pd=0 sd=0>',
+        ]
         window_positions = [
             '<wp id=0 ap=4 ah=50 av=50>',
             '<wp id=1 ap=7 ah=50 av=100>'
@@ -97,7 +105,7 @@ def main() -> None:
             '<timedtext format="3">',
             '<head>',
             *_get_text_styles(args.rows, palette),
-            window_style,
+            *window_styles,
             *window_positions,
             '</head>',
             '<body>', *subtitles, *meta_subtitles, '</body>',
