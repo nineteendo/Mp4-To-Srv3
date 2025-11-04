@@ -5,7 +5,7 @@ __all__: list[str] = [
     "CHAR_ASPECT_RATIO", "convert_to_frames", "print_progress_bar"
 ]
 
-from math import ceil, floor
+from math import ceil, floor, inf
 
 # pylint: disable-next=E0611
 from cv2 import (
@@ -14,6 +14,11 @@ from cv2 import (
 )
 from PIL import Image
 
+_THRESHOLDS: dict[float, dict[str, int]] = {
+    4 / 3:   {"landscape": 63, "large_text": 33, "standard": 48},
+    16 / 9:  {"landscape": 46, "large_text": 33, "large_text_portrait": 58},
+    64 / 27: {"landscape": 46, "large_text": 25, "standard": 35}
+}
 CHAR_ASPECT_RATIO: float = 35 / 58
 
 
@@ -43,10 +48,28 @@ def convert_to_frames(
     ret, frame = cam.read()
     img: Image.Image = Image.fromarray(cvtColor(frame, COLOR_BGR2RGB))
 
-    display_mode: str = (
-        "standard" if rows <= 48 else "narrow" if rows <= 63 else "portrait"
-    )
-    font_size: str = "default" if rows <= 33 else "small"
+    min_ar: float = (img.width - 0.5) / (img.height + 0.5)
+    max_ar: float = (img.width + 0.5) / (img.height - 0.5)
+    for ar, threshold in _THRESHOLDS.items():
+        if min_ar <= ar <= max_ar:
+            if rows <= threshold["landscape"]:
+                if rows <= threshold.get("standard", inf) or ar == 16 / 9:
+                    display_mode: str = "standard"
+                else:
+                    display_mode = "narrow" if ar < 16 / 9 else "wide"
+
+                large_text_threshold: float = threshold["large_text"]
+            else:
+                display_mode = "portrait"
+                large_text_threshold = threshold.get(
+                    "large_text_portrait", -inf
+                )
+
+            break
+    else:
+        raise SystemExit(f"Unknown aspect ratio: {min_ar} <= ar <= {max_ar}")
+
+    font_size: str = "default" if rows <= large_text_threshold else "small"
     if display_mode == "portrait":
         cols: int = round(rows / CHAR_ASPECT_RATIO)
         rows = round(cols * CHAR_ASPECT_RATIO * img.width / img.height)
