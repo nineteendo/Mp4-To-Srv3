@@ -18,7 +18,7 @@ CHAR_ASPECT_RATIO: float = 35 / 58
 
 
 def print_progress_bar(iteration: int, total: int) -> None:
-    """Prints an in-place progress bar."""
+    """Print an in-place progress bar."""
     percentage: float = 100 * iteration / total
     progress: str = f"Progress: {iteration}/{total} - {percentage:.1f}%"
     print(progress, end='\r', flush=True)
@@ -26,17 +26,9 @@ def print_progress_bar(iteration: int, total: int) -> None:
 
 # pylint: disable-next=R0913, R0914, R0917
 def convert_to_frames(
-    file: str,
-    startms: int,
-    portrait: bool,
-    rows: int,
-    layers: int,
-    targetsize: int
-) -> tuple[list[list[Image.Image]], float]:
-    """
-    Extract frames from an mp4 file starting at a given offset.
-    Returns a list of PIL Images and ms per frame.
-    """
+    file: str, startms: int, rows: int, layers: int, targetsize: int
+) -> tuple[list[list[Image.Image]], float, str, str]:
+    """Extract frames list from an mp4 file."""
     frames_list: list[list[Image.Image]] = []
     cam: VideoCapture = VideoCapture(file)
     fps: float = cam.get(CAP_PROP_FPS)
@@ -51,7 +43,11 @@ def convert_to_frames(
     ret, frame = cam.read()
     img: Image.Image = Image.fromarray(cvtColor(frame, COLOR_BGR2RGB))
 
-    if portrait:
+    display_mode: str = (
+        "standard" if rows <= 48 else "narrow" if rows <= 63 else "portrait"
+    )
+    font_size: str = "default" if rows <= 33 else "small"
+    if display_mode == "portrait":
         cols: int = round(rows / CHAR_ASPECT_RATIO)
         rows = round(cols * CHAR_ASPECT_RATIO * img.width / img.height)
     else:
@@ -80,6 +76,6 @@ def convert_to_frames(
     print()
     cam.release()
     if total_frames > 1:
-        return frames_list, fps / step
+        return frames_list, fps / step, display_mode, font_size
 
-    return frames_list, 1 / 5
+    return frames_list, 1 / 5, display_mode, font_size

@@ -44,9 +44,9 @@ def _parse_args() -> Namespace:
     return parser.parse_args()
 
 
-def _get_text_styles(rows: int, palette: dict[int, int]) -> list[str]:
+def _get_text_styles(font_size: str, palette: dict[int, int]) -> list[str]:
     return [
-        f'<pen id={palette_id} bo=0 of={2 if rows > 30 else 1} '
+        f'<pen id={palette_id} bo=0 of={2 if font_size == "small" else 1} '
         f'fc="#{color_id:03x}" ec="#{color_id:03x}">'
         for color_id, palette_id in palette.items()
     ]
@@ -58,10 +58,8 @@ def main() -> None:
     if not exists(args.file):
         raise SystemExit(f"File not found: {args.file}")
 
-    portrait: bool = args.rows > 60
-    frames_list, fps = convert_to_frames(
-        args.file, args.msoffset, portrait, args.rows, args.layers,
-        args.targetsize
+    frames_list, fps, display_mode, font_size = convert_to_frames(
+        args.file, args.msoffset, args.rows, args.layers, args.targetsize
     )
     if args.subfile is None:
         meta_subtitles: list[str] = []
@@ -71,9 +69,10 @@ def main() -> None:
         )
 
     subtitles, palette = convert_to_subtitles(
-        frames_list, fps, args.submsoffset, portrait, args.rows, args.layers
+        frames_list, fps, args.submsoffset, display_mode == "portrait",
+        args.rows, args.layers
     )
-    if portrait:
+    if display_mode == "portrait":
         window_styles: list[str] = [
             '<ws id=0 pd=0 sd=0>',
             '<ws id=1 pd=3 sd=0>'
@@ -97,14 +96,14 @@ def main() -> None:
         args.dir,
         f"{args.rows * (sqrt(args.layers) if len(palette) > 16 else 4):.0f}p"
         + (f"{fps:.2g}" if round(fps) != 30 else "")
-        + (" (portrait)" if portrait else "")
+        + (f" ({display_mode})" if display_mode != "standard" else "")
         + ".srv3"
     )
     with open(output_filename, "w", encoding="utf-8") as fp:
         fp.write("\n".join([
             '<timedtext format="3">',
             '<head>',
-            *_get_text_styles(args.rows, palette),
+            *_get_text_styles(font_size, palette),
             *window_styles,
             *window_positions,
             '</head>',
