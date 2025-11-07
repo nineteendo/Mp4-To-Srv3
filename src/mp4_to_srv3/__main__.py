@@ -58,7 +58,7 @@ def main() -> None:
     if not exists(args.file):
         raise SystemExit(f"File not found: {args.file}")
 
-    frames_list, fps, display_mode, font_size = convert_to_frames(
+    frames_list, fps, display_mode, font_size, char_ar = convert_to_frames(
         args.file, args.msoffset, args.rows, args.layers, args.targetsize
     )
     if args.subfile is None:
@@ -70,7 +70,7 @@ def main() -> None:
 
     subtitles, palette = convert_to_subtitles(
         frames_list, fps, args.submsoffset, display_mode == "portrait",
-        args.rows, args.layers
+        char_ar, args.rows, args.layers
     )
     if display_mode == "portrait":
         window_styles: list[str] = [

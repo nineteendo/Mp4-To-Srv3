@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 from PIL import Image
 
-from mp4_to_srv3.convert_to_frames import CHAR_ASPECT_RATIO, print_progress_bar
+from mp4_to_srv3.convert_to_frames import print_progress_bar
 
 if TYPE_CHECKING:
     _Color = NDArray
@@ -89,16 +89,17 @@ def _convert_img_to_ascii(
     palette: dict[int, int],
     img: Image.Image,
     portrait: bool,
+    char_ar: float,
     rows: int,
     layers: int,
     layer_idx: int
 ) -> tuple[int, str]:
     if portrait:
-        cols: int = round(rows / CHAR_ASPECT_RATIO)
-        rows = round(cols * CHAR_ASPECT_RATIO * img.width / img.height)
+        cols: int = round(rows / char_ar)
+        rows = round(cols * char_ar * img.width / img.height)
         img = img.rotate(90, expand=True)
     else:
-        cols = round(rows / CHAR_ASPECT_RATIO * img.width / img.height)
+        cols = round(rows / char_ar * img.width / img.height)
 
     img = img.resize((2 * cols, 4 * rows), Image.Resampling.LANCZOS)
     arr: NDArray = np.array(img)
@@ -136,6 +137,7 @@ def _convert_to_subtitle_entry(
     fps: float,
     submsoffset: int,
     portrait: bool,
+    char_ar: float,
     rows: int,
     layers: int,
     layer_idx: int
@@ -144,7 +146,7 @@ def _convert_to_subtitle_entry(
     duration: float = 1000 / fps
     frame: Image.Image = _blend_frames(frames)
     palette_id, ascii_img = _convert_img_to_ascii(
-        palette, frame, portrait, rows, layers, layer_idx
+        palette, frame, portrait, char_ar, rows, layers, layer_idx
     )
     return {
         "start": start,
@@ -160,6 +162,7 @@ def convert_to_subtitles(
     fps: float,
     submsoffset: int,
     portrait: bool,
+    char_ar: float,
     rows: int,
     layers: int
 ) -> tuple[list[str], dict[int, int]]:
@@ -172,8 +175,8 @@ def convert_to_subtitles(
         entries: list[dict[str, Any]] = []
         for idx, frames in enumerate(frames_list):
             entry: dict[str, Any] = _convert_to_subtitle_entry(
-                palette, frames, idx, fps, submsoffset, portrait, rows, layers,
-                layer_idx
+                palette, frames, idx, fps, submsoffset, portrait, char_ar,
+                rows, layers, layer_idx
             )
             iteration += 1
             print_progress_bar(iteration, len(frames_list) * layers)
