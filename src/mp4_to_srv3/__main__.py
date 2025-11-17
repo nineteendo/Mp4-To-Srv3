@@ -52,9 +52,7 @@ def _get_text_styles(font_size: str, palette: dict[int, int]) -> list[str]:
     ]
 
 
-def main() -> None:
-    """Convert mp4 to srv3 subtitles using ASCII art."""
-    args: Namespace = _parse_args()
+def _run(args: Namespace) -> None:
     if not exists(args.file):
         raise SystemExit(f"File not found: {args.file}")
 
@@ -112,6 +110,14 @@ def main() -> None:
         ]))
 
     print(f"Subtitles written to {output_filename}")
+
+
+def main() -> None:
+    """Convert mp4 to srv3 subtitles using ASCII art."""
+    try:
+        _run(_parse_args())
+    except KeyboardInterrupt:
+        print()
 
 
 if __name__ == "__main__":
