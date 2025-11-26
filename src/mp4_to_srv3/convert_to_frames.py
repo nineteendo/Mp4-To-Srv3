@@ -14,6 +14,7 @@ from PIL import Image
 
 _CHAR_ARS: dict[float, dict[str, float]] = {
     4 / 3: {"narrow": 14 / 23},
+    3 / 2: {"narrow": 14 / 23},
     16 / 9: {"standard": 14 / 23, "portrait": 20 / 33},
     64 / 27: {"wide": 7 / 12}
 }
@@ -22,6 +23,7 @@ _CHAR_AR_LARGE_TEXT: dict[str, float] = {
 }
 _THRESHOLDS: dict[float, dict[str, int]] = {
     4 / 3: {"landscape": 63, "large_text": 33, "standard": 49},
+    3 / 2: {"landscape": 56, "large_text": 33, "standard": 49},
     16 / 9: {"landscape": 47, "large_text": 33, "large_text_portrait": 58},
     64 / 27: {"landscape": 45, "large_text": 25, "standard": 35}
 }
