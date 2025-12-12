@@ -28,3 +28,4 @@ $ mp4_to_srv3 input/video.mp4 --subfile input/captions.srt --dir output --rows 1
 | `--rows`        | No (default: 12)  | Number of characters per column   |
 | `--layers`      | No (default: 1)   | Number of stacked frames          |
 | `--targetsize`  | No (default: 12)  | Target size in MB                 |
+| `--decay`       | No (default: 0)   | Motion-blur decay factor          |

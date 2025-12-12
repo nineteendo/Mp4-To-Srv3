@@ -15,7 +15,6 @@ from mp4_to_srv3.convert_to_frames import print_progress_bar
 if TYPE_CHECKING:
     _Color = NDArray
 
-_DECAY: float = 0.5 ** (1 / 2)
 _DOT_POSITIONS: NDArray = np.array([
     1 << 0, 1 << 3,
     1 << 1, 1 << 4,
@@ -24,8 +23,11 @@ _DOT_POSITIONS: NDArray = np.array([
 ])
 
 
-def _blend_frames(frames: list[Image.Image]) -> Image.Image:
-    weights: NDArray = _DECAY ** np.arange(len(frames), 0, -1)
+def _blend_frames(frames: list[Image.Image], decay: float) -> Image.Image:
+    if not decay:
+        return frames[-1]
+
+    weights: NDArray = decay ** np.arange(len(frames))[::-1]
     arr: NDArray = np.average(np.array(frames), 0, weights)
     return Image.fromarray(arr.round().astype(np.uint8))
 
@@ -129,7 +131,7 @@ def _convert_img_to_ascii(
     return first_palette_id, ''.join(ascii_img)
 
 
-# pylint: disable-next=R0913, R0917
+# pylint: disable-next=R0913, R0914, R0917
 def _convert_to_subtitle_entry(
     palette: dict[int, int],
     frames: list[Image.Image],
@@ -140,11 +142,12 @@ def _convert_to_subtitle_entry(
     char_ar: float,
     rows: int,
     layers: int,
-    layer_idx: int
+    layer_idx: int,
+    decay: float
 ) -> dict[str, Any]:
     start: float = 1000 * frame_num / fps + submsoffset
     duration: float = 1000 / fps
-    frame: Image.Image = _blend_frames(frames)
+    frame: Image.Image = _blend_frames(frames, decay)
     palette_id, ascii_img = _convert_img_to_ascii(
         palette, frame, portrait, char_ar, rows, layers, layer_idx
     )
@@ -156,7 +159,7 @@ def _convert_to_subtitle_entry(
     }
 
 
-# pylint: disable-next=R0913, R0917
+# pylint: disable-next=R0913, R0914, R0917
 def convert_to_subtitles(
     frames_list: list[list[Image.Image]],
     fps: float,
@@ -164,7 +167,8 @@ def convert_to_subtitles(
     portrait: bool,
     char_ar: float,
     rows: int,
-    layers: int
+    layers: int,
+    decay: float
 ) -> tuple[list[str], dict[int, int]]:
     """Convert video frames list to SRV3 subtitles with ASCII art."""
     print('Generating ASCII art...')
@@ -176,7 +180,7 @@ def convert_to_subtitles(
         for idx, frames in enumerate(frames_list):
             entry: dict[str, Any] = _convert_to_subtitle_entry(
                 palette, frames, idx, fps, submsoffset, portrait, char_ar,
-                rows, layers, layer_idx
+                rows, layers, layer_idx, decay
             )
             iteration += 1
             print_progress_bar(iteration, len(frames_list) * layers)

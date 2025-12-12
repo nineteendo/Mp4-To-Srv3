@@ -41,6 +41,9 @@ def _parse_args() -> Namespace:
     parser.add_argument(
         '--targetsize', type=float, default=12, help="Target size in MB."
     )
+    parser.add_argument(
+        '--decay', type=float, default=0, help="Motion-blur decay factor."
+    )
     return parser.parse_args()
 
 
@@ -68,7 +71,7 @@ def _run(args: Namespace) -> None:
 
     subtitles, palette = convert_to_subtitles(
         frames_list, fps, args.submsoffset, display_mode == "portrait",
-        char_ar, args.rows, args.layers
+        char_ar, args.rows, args.layers, args.decay
     )
     if display_mode == "portrait":
         window_styles: list[str] = [
